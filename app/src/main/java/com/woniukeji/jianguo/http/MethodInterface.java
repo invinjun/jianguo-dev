@@ -10,6 +10,7 @@ import com.woniukeji.jianguo.entity.HttpResult;
 import com.woniukeji.jianguo.entity.JobInfo;
 import com.woniukeji.jianguo.entity.JobListBean;
 import com.woniukeji.jianguo.entity.Jobs;
+import com.woniukeji.jianguo.entity.JoinJob;
 import com.woniukeji.jianguo.entity.ListTJobEntity;
 import com.woniukeji.jianguo.entity.NameAuth;
 import com.woniukeji.jianguo.entity.NewUser;
@@ -220,20 +221,33 @@ public interface MethodInterface {
 */
         @GET("job/user/list/{city_id}")
         Observable<HttpResult<List<JobListBean>>> jobList(@Path("city_id") String city_id, @Query("area_id") String area_id, @Query("job_type_id") String job_type_id, @Query("order_field") String order_field, @Query("pageNum") String pageNum );
-
+/**
+*兼职详情接口
+*/
         @GET("job/user/detail/{job_id}")
-        Observable<HttpResult<JobInfo>> getJobDetailNew(@Path("job_id") String job_id);
+        Observable<HttpResult<JobInfo>> getJobDetailNew(@Path("job_id") String job_id,@Query("token") String token);
 
-
+/**
+*报名接口
+*/
         @POST("join/status")
         Observable<HttpResult> join(@Query("app_id") String app_id, @Query("sign") String sign,@Query("timestamp") String timestamp,@Query("job_id") String job_id);
-
+/**
+*主页bannner接口
+*/
         @GET("banner")
         Observable<HttpResult<List<Banner>>> getBanner();
-
+/**
+*兼职报名信息列表
+*/
         @GET("join/user")
-        Observable<HttpResult<List<JobInfo>>> getSignJob(@Query("app_id") String app_id, @Query("sign") String sign,@Query("timestamp") String timestamp);
+        Observable<HttpResult<List<JoinJob>>> getSignJob(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp, @Query("pageNum") int pageNum);
 
+        /**
+         *取消报名请求
+         */
+        @PUT("join/status")
+        Observable<HttpResult> joinStatus(@Query("app_id") String app_id, @Query("sign") String sign,@Query("timestamp") String timestamp,@Query("job_id") String job_id,@Query("status") int status);
 
 //        @POST("login")
 //        Observable<HttpResult<NewMerchant>> passwdLogin(@Query("app_id") String app_id, @Query("tel") String tel, @Query("password") String password, @Query("type") String type);

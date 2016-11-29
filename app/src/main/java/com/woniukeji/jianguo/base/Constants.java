@@ -20,7 +20,7 @@ import java.io.File;
 
 public class Constants {
     public static final String JIANGUO_FACTORY1="http://192.168.1.118:8080/";
-    public static final String JIANGUO_YW="http://192.168.1.117:9090/";
+    public static final String JIANGUO_YW="http://192.168.1.122:9090/";
     public static final String JIANGUO_TEST="http://101.200.195.147:8080/";
     public static final String JIANGUO_TEST2="http://v3.jianguojob.com:8080/";
     public static final String JIANGUO_USING=JIANGUO_YW;

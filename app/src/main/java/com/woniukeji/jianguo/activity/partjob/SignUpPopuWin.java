@@ -57,12 +57,14 @@ public class SignUpPopuWin extends PopupWindow implements View.OnClickListener {
     private long jobid;
     private JobInfo jobinfo;
     private SubscriberOnNextListener<String> stringSubscriberOnNextListener;
+    private String wage;
 
 
-    public SignUpPopuWin(Context context, Handler handler, long id, JobInfo jobinfo) {
+    public SignUpPopuWin(Context context, Handler handler, long id, JobInfo jobinfo,String wage) {
         this.context = context;
         this.mHandler=handler;
         jobid=id;
+        this.wage=wage;
         this.jobinfo=jobinfo;
     }
     public void showShareWindow() {
@@ -123,7 +125,7 @@ public class SignUpPopuWin extends PopupWindow implements View.OnClickListener {
             String date = DateUtils.getTime(jobinfo.getStart_date(), jobinfo.getEnd_date());
             String time = DateUtils.getHm(jobinfo.getBegin_time())+"-"+DateUtils.getHm(jobinfo.getEnd_time());
             String setTime =jobinfo.getSet_time();
-            mTvWage.setText(String.valueOf(jobinfo.getMoney()));
+            mTvWage.setText(wage);
             mTvWorkDate.setText(date);
             mTvWorkTime.setText(time);
             mTvCollectionSites.setText(jobinfo.getSet_place());
@@ -158,7 +160,7 @@ public class SignUpPopuWin extends PopupWindow implements View.OnClickListener {
             case R.id.tv_ok:
                 String tel = (String) SPUtils.getParam(context, Constants.LOGIN_INFO, Constants.SP_TEL, "");
                 long timeMillis = System.currentTimeMillis();
-                String sign = MD5Util.getSign(context,timeMillis);
+                 String sign = MD5Util.getSign(context,timeMillis);
                 HttpMethods.getInstance().MpostSign(new ProgressSubscriber<String>(stringSubscriberOnNextListener,context),tel,sign, String.valueOf(timeMillis), String.valueOf(jobid));
                 break;
         }

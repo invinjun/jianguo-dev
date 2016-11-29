@@ -2,7 +2,6 @@ package com.woniukeji.jianguo.activity.mine;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -17,21 +16,22 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.activity.BaseActivity;
 import com.woniukeji.jianguo.adapter.SignAdapter;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.BaseBean;
 import com.woniukeji.jianguo.entity.Jobs;
+import com.woniukeji.jianguo.entity.JoinJob;
 import com.woniukeji.jianguo.eventbus.SignEvent;
 import com.woniukeji.jianguo.activity.main.MainActivity;
-import com.woniukeji.jianguo.utils.DateUtils;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriber;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
+import com.woniukeji.jianguo.utils.MD5Util;
 import com.woniukeji.jianguo.utils.SPUtils;
 import com.woniukeji.jianguo.widget.FixedRecyclerView;
-import com.zhy.http.okhttp.OkHttpUtils;
-import com.zhy.http.okhttp.callback.Callback;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -41,8 +41,6 @@ import butterknife.ButterKnife;
 import butterknife.BindView;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
-import okhttp3.Call;
-import okhttp3.Response;
 
 /**
  * Activities that contain this fragment must implement the
@@ -64,14 +62,15 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
     private int MSG_POST_FAIL = 6;
     private Context mContext = SignUpActivity.this;
     private Handler mHandler = new Myhandler(mContext);
-    private List<Jobs.ListTJobEntity> modleList = new ArrayList<>();
+    private List<JoinJob> modleList = new ArrayList<>();
     private SignAdapter adapter;
     private LinearLayoutManager mLayoutManager;
     private int mPosition;
     private int type = 0;
     private int loginId;
     private int lastVisibleItem;
-
+ private SubscriberOnNextListener<List<JoinJob>> stringSubscriberOnNextListener;
+    private String tel;
 
     @Override
     protected void onDestroy() {
@@ -83,10 +82,10 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
     @Override
     public void RecyOnClick(int jobid, int offer, int position) {
         if (offer == 11) {
-            //去评价界面
+            //报名接口
         }
-        PostTask admitTask = new PostTask(String.valueOf(loginId), String.valueOf(jobid), String.valueOf(offer));
-        admitTask.execute();
+//        PostTask admitTask = new PostTask(String.valueOf(loginId), String.valueOf(jobid), String.valueOf(offer));
+//        admitTask.execute();
 
     }
 
@@ -130,21 +129,21 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:
-                    BaseBean<Jobs> jobsBaseBean = (BaseBean<Jobs>) msg.obj;
-                    int count = msg.arg1;
-                    if (count == 0) {
-                        modleList.clear();
-                    }
-                    if (refreshLayout != null && refreshLayout.isRefreshing()) {
-                        refreshLayout.setRefreshing(false);
-                    }
-                    modleList.addAll(jobsBaseBean.getData().getList_t_job());
-                    if (modleList.size() > 0) {
-                        rlNull.setVisibility(View.GONE);
-                    } else {
-                        rlNull.setVisibility(View.VISIBLE);
-                    }
-                    adapter.notifyDataSetChanged();
+//                    BaseBean<Jobs> jobsBaseBean = (BaseBean<Jobs>) msg.obj;
+//                    int count = msg.arg1;
+//                    if (count == 0) {
+//                        modleList.clear();
+//                    }
+//                    if (refreshLayout != null && refreshLayout.isRefreshing()) {
+//                        refreshLayout.setRefreshing(false);
+//                    }
+//                    modleList.addAll(jobsBaseBean.getData().getList_t_job());
+//                    if (modleList.size() > 0) {
+//                        rlNull.setVisibility(View.GONE);
+//                    } else {
+//                        rlNull.setVisibility(View.VISIBLE);
+//                    }
+//                    adapter.notifyDataSetChanged();
                     break;
                 case 1:
                     String ErrorMessage = (String) msg.obj;
@@ -203,23 +202,35 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                GetTask getTask = new GetTask(String.valueOf(loginId), String.valueOf(type), "0");
-                getTask.execute();
+                long timeMillis = System.currentTimeMillis();
+                String sign = MD5Util.getSign(SignUpActivity.this,timeMillis);
+                int pageNum=1;
+                HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,sign, String.valueOf(timeMillis),pageNum);
             }
         });
-        loginId = (int) SPUtils.getParam(mContext, Constants.LOGIN_INFO, Constants.SP_USERID, 0);
-        GetTask getTask = new GetTask(String.valueOf(loginId), String.valueOf(type), "0");
-        getTask.execute();
 
     }
 
     public void onEvent(SignEvent signEvent) {
-        GetTask getTask = new GetTask(String.valueOf(loginId), String.valueOf(type), "0");
-        getTask.execute();
+        long timeMillis = System.currentTimeMillis();
+        String sign = MD5Util.getSign(SignUpActivity.this,timeMillis);
+        int pageNum=1;
+        HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,sign, String.valueOf(timeMillis),pageNum);
+
     }
 
     @Override
     public void initListeners() {
+        stringSubscriberOnNextListener=new SubscriberOnNextListener<List<JoinJob>>() {
+            @Override
+            public void onNext(List<JoinJob> s) {
+                TastyToast.makeText(SignUpActivity.this,"操作成功！", TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+                modleList.addAll(s);
+                adapter.notifyDataSetChanged();
+            }
+        };
+
+
         list.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
 
@@ -227,8 +238,10 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (modleList.size() > 5 && lastVisibleItem == modleList.size()) {
-                    GetTask getTask = new GetTask(String.valueOf(loginId), String.valueOf(type), String.valueOf(lastVisibleItem));
-                    getTask.execute();
+                    long timeMillis = System.currentTimeMillis();
+                    String sign = MD5Util.getSign(SignUpActivity.this,timeMillis);
+                    int pageNum=modleList.size()/10+1;
+                    HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,sign, String.valueOf(timeMillis),pageNum);
                 }
             }
 
@@ -242,9 +255,10 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
 
     @Override
     public void initData() {
-        Intent intent = getIntent();
-
-
+        tel = (String) SPUtils.getParam(this, Constants.LOGIN_INFO, Constants.SP_TEL, "");
+        long timeMillis = System.currentTimeMillis();
+        String sign = MD5Util.getSign(this,timeMillis);
+        HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,this), tel,sign, String.valueOf(timeMillis), 1);
     }
 
     @Override
@@ -253,164 +267,7 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
     }
 
 
-    public class GetTask extends AsyncTask<Void, Void, Void> {
-        private final String loginid;
-        private final String type;
-        private final String count;
 
-        GetTask(String loginid, String type, String count) {
-            this.loginid = loginid;
-            this.type = type;
-            this.count = count;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-            try {
-                getJobs();
-            } catch (Exception e) {
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        /**
-         * postInfo
-         */
-        public void getJobs() {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.GET_SIGN_JOB)
-                    .addParams("only", only)
-                    .addParams("login_id", loginid)
-                    .addParams("type", type)
-                    .addParams("count", count)
-                    .build()
-                    .connTimeOut(6000)
-                    .readTimeOut(2000)
-                    .writeTimeOut(2000)
-                    .execute(new Callback<BaseBean<Jobs>>() {
-                        @Override
-                        public BaseBean parseNetworkResponse(Response response,int id) throws Exception {
-                            String string = response.body().string();
-                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean<Jobs>>() {
-                            }.getType());
-                            return baseBean;
-                        }
-
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                            Message message = new Message();
-                            message.obj = e.toString();
-                            message.what = MSG_GET_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-                        @Override
-                        public void onResponse(BaseBean baseBean,int id) {
-                            if (baseBean.getCode().equals("200")) {
-//                                SPUtils.setParam(AuthActivity.this, Constants.LOGIN_INFO, Constants.SP_TYPE, "0");
-                                Message message = new Message();
-                                message.obj = baseBean;
-                                message.arg1 = Integer.parseInt(count);
-                                message.what = MSG_GET_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_GET_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-                        }
-
-                    });
-        }
-    }
-
-    public class PostTask extends AsyncTask<Void, Void, Void> {
-        private final String loginid;
-        private final String jobid;
-        private final String offer;
-
-        PostTask(String loginid, String jobid, String offer) {
-            this.loginid = loginid;
-            this.jobid = jobid;
-            this.offer = offer;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-            try {
-                postStatu();
-            } catch (Exception e) {
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        /**
-         * postInfo
-         */
-        public void postStatu() {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.POST_STATUS)
-                    .addParams("only", only)
-                    .addParams("job_id", jobid)
-                    .addParams("login_id", loginid)
-                    .addParams("offer", offer)
-                    .build()
-                    .connTimeOut(6000)
-                    .readTimeOut(2000)
-                    .writeTimeOut(2000)
-                    .execute(new Callback<BaseBean>() {
-                        @Override
-                        public BaseBean parseNetworkResponse(Response response,int id) throws Exception {
-                            String string = response.body().string();
-                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean>() {
-                            }.getType());
-                            return baseBean;
-                        }
-
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                            Message message = new Message();
-                            message.obj = e.toString();
-                            message.what = MSG_POST_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-                        @Override
-                        public void onResponse(BaseBean baseBean,int id) {
-                            if (baseBean.getCode().equals("200")) {
-//                                SPUtils.setParam(AuthActivity.this, Constants.LOGIN_INFO, Constants.SP_TYPE, "0");
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_POST_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_POST_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-                        }
-
-                    });
-        }
-    }
 
 
 }

@@ -25,7 +25,9 @@ import com.google.gson.reflect.TypeToken;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.activity.BaseActivity;
 import com.woniukeji.jianguo.base.Constants;
+import com.woniukeji.jianguo.db.CityAreaDao;
 import com.woniukeji.jianguo.entity.BaseBean;
+import com.woniukeji.jianguo.entity.CityBean;
 import com.woniukeji.jianguo.entity.School;
 import com.woniukeji.jianguo.http.HttpMethods;
 import com.woniukeji.jianguo.http.ProgressSubscriber;
@@ -152,8 +154,9 @@ public class SchoolActivity extends BaseActivity {
         };
 
         tel = (String) SPUtils.getParam(context, Constants.LOGIN_INFO, Constants.SP_TEL, "");
-        String cityCode = (String) SPUtils.getParam(SchoolActivity.this, Constants.USER_INFO, Constants.USER_LOCATION_CODE,"");
-
+        CityAreaDao cityAreaDao=new CityAreaDao(this);
+        CityBean cityBean = cityAreaDao.queryCitySelected();
+        String cityCode=cityBean.getCode();
         long timeMillis = System.currentTimeMillis();
         String sign = MD5Util.getSign(SchoolActivity.this,timeMillis);
         HttpMethods.getInstance().getSchool(new ProgressSubscriber(subscriberOnNextListener,this), tel,sign,String.valueOf(timeMillis),cityCode);

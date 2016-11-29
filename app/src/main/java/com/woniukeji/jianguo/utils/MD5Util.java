@@ -37,11 +37,19 @@ public class MD5Util {
         }  
     }
     public static String getSign(Context context, long timeMillis){
+//        String signSecret = "He37o6TaD0N";
+//        String token= (String) SPUtils.getParam(context, Constants.LOGIN_INFO,Constants.SP_WQTOKEN,"");
+//        String tel= (String) SPUtils.getParam(context, Constants.LOGIN_INFO,Constants.SP_TEL,"");
+//        String appid=MD5(tel);
+//        String sign=MD5(appid+signSecret+timeMillis+token+"jianguo");
         String signSecret = "He37o6TaD0N";
         String token= (String) SPUtils.getParam(context, Constants.LOGIN_INFO,Constants.SP_WQTOKEN,"");
         String tel= (String) SPUtils.getParam(context, Constants.LOGIN_INFO,Constants.SP_TEL,"");
         String appid=MD5(tel);
         String sign=MD5(appid+signSecret+timeMillis+token+"jianguo");
+        LogUtils.e("sign",appid+"+"+signSecret+"+"+timeMillis+"+"+token+"+"+"jianguo");
+        LogUtils.e("sign",sign);
+
         return sign;
     }
 

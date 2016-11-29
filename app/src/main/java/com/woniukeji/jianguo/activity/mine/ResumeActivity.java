@@ -121,7 +121,7 @@ public class ResumeActivity extends BaseActivity {
     private File imgFile;
     private String fileName = "";
     private String[] clothes = new String[]{"S", "M", "L", "XL", "XXL", "XXXL"};
-    private String sex = "1";
+    private String sex = "2";
     private String student = "1";
     private String url2;
 
@@ -332,7 +332,7 @@ public class ResumeActivity extends BaseActivity {
         }
 
         tvDate.setText(userResum.getIntoschool_date());
-        if (userResum.getSex()==0) {
+        if (userResum.getSex()==2) {
             rbGirl.setChecked(true);
             rbBoy.setChecked(false);
         } else {
@@ -463,10 +463,10 @@ public class ResumeActivity extends BaseActivity {
                 MultiImageSelectorActivity.startSelect(ResumeActivity.this, 0, 1, 0);
                 break;
             case R.id.rb_girl:
-                sex = "0";
+                sex = "1";
                 break;
             case R.id.rb_boy:
-                sex = "1";
+                sex = "2";
                 break;
             case R.id.rl_birthday:
                 TimePickerPopuWin pickerPopup1 = new TimePickerPopuWin(context, mHandler, 3);

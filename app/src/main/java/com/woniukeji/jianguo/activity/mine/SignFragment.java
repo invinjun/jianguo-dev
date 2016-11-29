@@ -169,7 +169,7 @@ public class SignFragment extends BaseFragment implements SignAdapter.RecyCallBa
     }
 
     private void initview() {
-        adapter = new SignAdapter(modleList, getActivity(),type,this);
+//        adapter = new SignAdapter(modleList, getActivity(),type,this);
         mLayoutManager = new LinearLayoutManager(getActivity());
 //设置布局管理器
         list.setLayoutManager(mLayoutManager);

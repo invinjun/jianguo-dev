@@ -492,8 +492,8 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
                 } else if (etSms.getText().toString().equals("")) {
                     showShortToast("请输入验证码");
                     return;
-                }  else if (Double.valueOf(etMoneySum.getText().toString()) < 50) {
-                    showShortToast("提现金额必须大于50");
+                }  else if (Double.valueOf(etMoneySum.getText().toString()) < 30) {
+                    showShortToast("提现金额必须大于30");
                     return;
                 }
                  HttpMethods.getInstance().postMoney(new ProgressSubscriber<String>(MoneySubscriberOnNextListener,this),String.valueOf(loginid),etSms.getText().toString().trim(),  type,etMoneySum.getText().toString());

@@ -10,6 +10,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +38,7 @@ import com.woniukeji.jianguo.entity.CityCategoryBase;
 import com.woniukeji.jianguo.entity.JobListBean;
 import com.woniukeji.jianguo.entity.Jobs;
 import com.woniukeji.jianguo.eventbus.JobFilterEvent;
+import com.woniukeji.jianguo.eventbus.MessageEvent;
 import com.woniukeji.jianguo.http.HttpMethods;
 import com.woniukeji.jianguo.http.ProgressSubscriber;
 import com.woniukeji.jianguo.http.ProgressSubscriberOnError;
@@ -81,7 +83,7 @@ public class PartJobFragment extends BaseFragment {
     public List<JobListBean> jobList = new ArrayList<JobListBean>();
     String typeid = "0";
     String areid = "0";
-    String filterid = "2";
+    String filterid = "0";
     private Handler mHandler = new Myhandler(this.getActivity());
     private DropDownMenu mMenu;
     private boolean DataComplete=false;
@@ -110,25 +112,38 @@ public class PartJobFragment extends BaseFragment {
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
+        LogUtils.e("fragemnt","isVisibleToUser="+isVisibleToUser);
         if (getUserVisibleHint()){
             isInvisible=true;
-            initData();
         }else {
             isInvisible=false;
         }
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        LogUtils.e("fragemnt","onAttach="+isInvisible);
+        if (isInvisible){
+
+        }
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        LogUtils.e("fragemnt","onCreate="+isInvisible);
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        LogUtils.e("fragemnt","onCreateView="+isInvisible);
         View view = inflater.inflate(R.layout.fragment_part_job, container, false);
         ButterKnife.bind(this, view);
+        EventBus.getDefault().register(this);
             initview();
         initDropDownView(view);
+
         return view;
     }
 
@@ -153,7 +168,7 @@ public class PartJobFragment extends BaseFragment {
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,null,null,null,"1");
+                HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,areid,typeid,filterid,"1");
 
             }
         });
@@ -180,13 +195,13 @@ public class PartJobFragment extends BaseFragment {
         }
         TypeDao typeDao=new TypeDao(getActivity());
         CityAreaDao cityAreaDao=new CityAreaDao(getActivity());
-        List<CityCategoryBase.TypeListBean> listTTypeEntities = typeDao.alterTypeDate();
         CityBean cityBean = cityAreaDao.queryCitySelected();
+        List<CityCategoryBase.TypeListBean> listTTypeEntities = typeDao.alterTypeDate();
         cityCode=cityBean.getCode();
         List<AreaBean> areaList = cityAreaDao.alterAreaDate(cityBean.getCode());
         initDrawData(areaList,listTTypeEntities);
         isRefesh=true;
-        HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,null,null,null,"1");
+        HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,areid,typeid,filterid,"1");
 
 //        HttpMethods.getInstance().getCityCategory(new ProgressSubscriber<CityCategory>(subscriberOnNextListener,getActivity()));
     }
@@ -214,20 +229,20 @@ public class PartJobFragment extends BaseFragment {
                 } else if (ColumnIndex == 2) {
                     switch (RowIndex) {
                         case 0:
-                            filterid = "2";
+                            filterid = "0";
                             break;
                         case 1:
-                            filterid = "1";
+                            filterid = "101";
                             break;
                         case 2:
-                            filterid = "0";
+                            filterid = "102";
                             break;
                     }
                 } else if (ColumnIndex == 1) {
                     areid= String.valueOf(sortId);
                 }
                 isRefesh=true;
-                HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,null,null,null,"1");
+                HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,areid,typeid,filterid,"1");
 
 //                getJobs(cityCode, typeid, areid, filterid, "0");
             }
@@ -290,15 +305,22 @@ public class PartJobFragment extends BaseFragment {
         mMenu.setmMenuItems(items);
 //        getJobs(cityCode, typeid, areid, "2", "0");
     }
-
+    public void onEvent(JobFilterEvent event) {
+        initData();
+    }
 
     @Override
     public void onStart() {
+        LogUtils.e("fragemnt","onStart="+isInvisible);
         super.onStart();
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        LogUtils.e("fragemnt","onActivityCreated="+isInvisible);
+
+
+        initData();
         super.onActivityCreated(savedInstanceState);
         list.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
@@ -309,7 +331,7 @@ public class PartJobFragment extends BaseFragment {
 //                    getJobs(cityCode, typeid, areid, filterid,String.valueOf(lastVisibleItem));
                     isRefesh=false;
                     int pageNum=jobList.size()/10+1;
-                    HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,null,null,null, String.valueOf(pageNum));
+                    HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,areid,typeid,filterid, String.valueOf(pageNum));
                     DataComplete=false;
                     LogUtils.e("position",lastVisibleItem+"开始");
                 }

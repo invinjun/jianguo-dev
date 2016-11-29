@@ -110,6 +110,7 @@ public class JobDetailActivity extends BaseActivity {
     private List<String> limitBeens = new ArrayList<>();
     private List<String> welfareBeens = new ArrayList<>();
     private String tel;
+    private String wagesStr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,7 +216,8 @@ public class JobDetailActivity extends BaseActivity {
         tel = (String) SPUtils.getParam(mContext, Constants.LOGIN_INFO, Constants.SP_TEL,"");
 //        resume = (String) SPUtils.getParam(mContext, Constants.LOGIN_INFO, Constants.SP_RESUMM, "");
 //        sex = (String) SPUtils.getParam(mContext, Constants.USER_INFO, Constants.USER_SEX, "");
-        HttpMethods.getInstance().getJobDetailNew(new ProgressSubscriber<JobInfo>(subscriberOnNextListener, this), String.valueOf(jobid));
+        String token= (String) SPUtils.getParam(this, Constants.LOGIN_INFO,Constants.SP_WQTOKEN,"");
+        HttpMethods.getInstance().getJobDetailNew(new ProgressSubscriber<JobInfo>(subscriberOnNextListener, this), String.valueOf(jobid),token);
 //        HttpMethods.getInstance().postLook(new BackgroundSubscriber<Void>(voidSubscriberOnNextListener,this),String.valueOf(loginId),String.valueOf(jobid));
     }
 
@@ -372,7 +374,7 @@ public class JobDetailActivity extends BaseActivity {
         }
 
 
-        SignUpPopuWin signUpPopuWin=new SignUpPopuWin(mContext,mHandler,jobid,mJobInfo);
+        SignUpPopuWin signUpPopuWin=new SignUpPopuWin(mContext,mHandler,jobid,mJobInfo,wagesStr);
         signUpPopuWin.showShareWindow();
         Rect rect = new Rect();
         JobDetailActivity.this.getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
@@ -389,7 +391,7 @@ public class JobDetailActivity extends BaseActivity {
      * created at 2016/8/18 15:49
      */
     private void shareJob() {
-        SharePopupWindow share = new SharePopupWindow(JobDetailActivity.this, mHandler,String.valueOf(jobid),mJobInfo,tvWorkDate.getText().toString(),tvWage.getText().toString());
+        SharePopupWindow share = new SharePopupWindow(JobDetailActivity.this, mHandler,String.valueOf(jobid),mJobInfo,tvWorkDate.getText().toString(),wagesStr);
         share.showShareWindow();
         // 显示窗口 (设置layout在PopupWindow中显示的位置)
         share.showAtLocation(JobDetailActivity.this.getLayoutInflater().inflate(R.layout.activity_job_detail, null),
@@ -406,24 +408,23 @@ public class JobDetailActivity extends BaseActivity {
         tvWorkTime.setText(time);
         tvCollectionSites.setText(jobInfo.getSet_place());
         tvCollectionTime.setText(setTime);
-
+        wagesStr ="";
         if (jobInfo.getTerm()==0){
-            tvWage.setText(jobInfo.getMoney()+"/月");
+            wagesStr=jobInfo.getMoney()+"元/月";
         }else if(jobInfo.getTerm()==1){
-            tvWage.setText(jobInfo.getMoney()+"元/周");
+            wagesStr=jobInfo.getMoney()+"元/周";
         }else if(jobInfo.getTerm()==2){
-            tvWage.setText(jobInfo.getMoney()+"元/日");
+            wagesStr=jobInfo.getMoney()+"元/日";
         }else if(jobInfo.getTerm()==3){
-            tvWage.setText(jobInfo.getMoney()+"元/时");
+            wagesStr=jobInfo.getMoney()+"元/时";
         }else if(jobInfo.getTerm()==4){
-            tvWage.setText(jobInfo.getMoney()+"元/次");
+            wagesStr=jobInfo.getMoney()+"元/次";
         }else if(jobInfo.getTerm()==5){
-            tvWage.setText("义工");
+            wagesStr="义工";
         }else if(jobInfo.getTerm()==6){
-            tvWage.setText("面议");
+            wagesStr="面议";
         }
-        tvWage.setText(String.valueOf(jobInfo.getMoney()));
-
+        tvWage.setText(wagesStr);
         if (jobInfo.getStatus() != 1) {
             tvSignup.setText("已报满");
             tvSignup.setBackgroundResource(R.color.gray);

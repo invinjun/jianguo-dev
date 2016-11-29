@@ -33,7 +33,10 @@ public class CityAreaDao {
      * @param context
      */
     public CityAreaDao(Context context) {
-        mMyDBHelper=new MyDBHelper(context);
+        if (mMyDBHelper==null){
+            mMyDBHelper=new MyDBHelper(context);
+        }
+
     }
 
     // 将数据库打开帮帮助类实例化，然后利用这个对象

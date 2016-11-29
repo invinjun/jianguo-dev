@@ -13,6 +13,7 @@ import com.woniukeji.jianguo.entity.HttpResult;
 import com.woniukeji.jianguo.entity.JobInfo;
 import com.woniukeji.jianguo.entity.JobListBean;
 import com.woniukeji.jianguo.entity.Jobs;
+import com.woniukeji.jianguo.entity.JoinJob;
 import com.woniukeji.jianguo.entity.ListTJobEntity;
 import com.woniukeji.jianguo.entity.NewUser;
 import com.woniukeji.jianguo.entity.PushMessage;
@@ -143,8 +144,8 @@ public class HttpMethods {
     /**
      *获取兼职详情（工作详情界面new）
      */
-    public void getJobDetailNew(Subscriber<JobInfo> subscriber,String jobId){
-        methodInterface.getJobDetailNew(jobId)
+    public void getJobDetailNew(Subscriber<JobInfo> subscriber,String jobId,String token){
+        methodInterface.getJobDetailNew(jobId,token)
                 .map(new HttpResultFunc<JobInfo>())
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
@@ -522,11 +523,23 @@ public class HttpMethods {
      *@author invinjun
      *created at 2016/7/26 16:46
      */
-    public void getSgnJob(Subscriber<List<JobInfo>> subscriber,String tel, String sign, String timestamp, String jobid){
+    public void getJoinJob(Subscriber<List<JoinJob>> subscriber, String tel, String sign, String timestamp, int pageNum){
         String appid= MD5Util.MD5(tel);
-        Observable<HttpResult<List<JobInfo>>> cityCategory = methodInterface.getSignJob(appid,sign,timestamp);
-        cityCategory.map(new HttpResultFunc<List<JobInfo>>())
+        Observable<HttpResult<List<JoinJob>>> cityCategory = methodInterface.getSignJob(appid,sign,timestamp,pageNum);
+        cityCategory.map(new HttpResultFunc<List<JoinJob>>())
                 .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+    /**
+     *取消报名
+     */
+    public void cancelJoin(Subscriber<HttpResult> subscriber, String tel, String sign, String timestamp, String jobid,int status){
+        String appid= MD5Util.MD5(tel);
+        Observable<HttpResult> cityCategory = methodInterface.joinStatus(appid,sign,timestamp,jobid,status);
+        cityCategory.subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
