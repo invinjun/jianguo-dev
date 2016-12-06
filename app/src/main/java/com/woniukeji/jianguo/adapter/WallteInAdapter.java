@@ -12,10 +12,11 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.woniukeji.jianguo.R;
-import com.woniukeji.jianguo.entity.Wage;
+import com.woniukeji.jianguo.entity.WageLog;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.utils.GlideCircleTransform;
 
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -23,7 +24,7 @@ import butterknife.BindView;
 
 public class WallteInAdapter extends RecyclerView.Adapter<WallteInAdapter.ViewHolder> {
 
-    private final List<Wage.ListTWagesEntity> mValues;
+    private final List<WageLog> mValues;
     private final Context mContext;
     public static final int NORMAL = 1;
     public static final int IS_FOOTER = 2;
@@ -31,7 +32,7 @@ public class WallteInAdapter extends RecyclerView.Adapter<WallteInAdapter.ViewHo
     private AnimationDrawable mAnimationDrawable;
     private boolean isFooterChange = false;
 
-    public WallteInAdapter(List<Wage.ListTWagesEntity> items, Context context) {
+    public WallteInAdapter(List<WageLog> items, Context context) {
         mValues = items;
         mContext = context;
     }
@@ -47,9 +48,6 @@ public class WallteInAdapter extends RecyclerView.Adapter<WallteInAdapter.ViewHo
         } else {
             holder.loading.setText("已加载全部");
             holder.animLoading.setVisibility(View.GONE);
-//            holder.animLoading.setBackgroundResource(R.drawable.loading_footer);
-//            mAnimationDrawable = (AnimationDrawable) holder.animLoading.getBackground();
-//            mAnimationDrawable.start();
         }
 
     }
@@ -86,7 +84,7 @@ public class WallteInAdapter extends RecyclerView.Adapter<WallteInAdapter.ViewHo
                 holder.itemView.setVisibility(View.VISIBLE);
             }
         } else {
-            final Wage.ListTWagesEntity job = mValues.get(position);
+            final WageLog job = mValues.get(position);
 
 
             //等待数据设置
@@ -117,21 +115,23 @@ public class WallteInAdapter extends RecyclerView.Adapter<WallteInAdapter.ViewHo
 //            }
 //            holder.imgSex.setVisibility(View.GONE);
 
+            if (job.getJobEntity()!=null){
+                Glide.with(mContext).load(job.getJobEntity().getJob_image())
+                        .placeholder(R.mipmap.icon_head_defult)
+                        .error(R.mipmap.icon_head_defult)
+                        .transform(new GlideCircleTransform(mContext))
+                        .into(holder.userHead);
+            }
 
-            Glide.with(mContext).load(job.getJob_image())
-                    .placeholder(R.mipmap.icon_head_defult)
-                    .error(R.mipmap.icon_head_defult)
-                    .transform(new GlideCircleTransform(mContext))
-                    .into(holder.userHead);
-             holder.tvWallteWages.setText("+"+job.getReal_money());
-            holder.businessName.setText(job.getJob_name());
-            if (job.getRemarks().equals("")||job.getRemarks()==null||job.getRemarks().equals("null")){
+             holder.tvWallteWages.setText("+"+job.getMoney());
+            holder.businessName.setText(job.getJobEntity().getJob_name());
+            if (job.getNote()==null||job.getNote().equals("null")||job.getNote().equals("")){
                 holder.tvContentRemark.setText("无备注信息");
             }else {
-                holder.tvContentRemark.setText(job.getRemarks());
+                holder.tvContentRemark.setText(job.getNote());
             }
-            if (job.getJob_start()!=null&&job.getJob_stop()!=null){
-                holder.tvWorkDate.setText(DateUtils.getTime(Long.valueOf(job.getJob_start()),Long.valueOf( job.getJob_stop())));
+            if (job.getJobEntity().getStart_date()!=0&&job.getJobEntity().getStart_date()!=0){
+                holder.tvWorkDate.setText(DateUtils.getTime(job.getJobEntity().getStart_date(),job.getJobEntity().getEnd_date()));
             }
 //            holder.tvWorkDate.setText(DateUtils.getTime(Long.valueOf(job.getJob_start()),Long.valueOf( job.getJob_stop())));
             //动画

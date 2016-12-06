@@ -9,6 +9,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.telecom.TelecomManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,12 +19,17 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.adapter.WallteOutAdapter;
 import com.woniukeji.jianguo.base.BaseFragment;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.DrawMoney;
+import com.woniukeji.jianguo.entity.WageLog;
 import com.woniukeji.jianguo.eventbus.AttentionCollectionEvent;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriber;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.utils.SPUtils;
 import com.woniukeji.jianguo.widget.FixedRecyclerView;
@@ -61,16 +67,14 @@ public class WallteOutFragment extends BaseFragment {
     private WallteOutAdapter adapter;
     private int MSG_GET_SUCCESS = 0;
     private int MSG_GET_FAIL = 1;
-    private int MSG_DELETE_SUCCESS=5;
-    private int MSG_DELETE_FAIL=6;
-    public List<DrawMoney.DataEntity.ListTUserMoneyoutEntity> wagesList = new ArrayList<DrawMoney.DataEntity.ListTUserMoneyoutEntity>();
+    public List<WageLog> wagesList = new ArrayList<WageLog>();
     private Handler mHandler = new Myhandler(this.getActivity());
     private Context mContext = this.getActivity();
-    private int loginId;
+    private String tel;
     private int delePosition;
     private int lastVisibleItem;
     private LinearLayoutManager mLayoutManager;
-
+    private SubscriberOnNextListener<List<WageLog>> listSubscriberOnNextListener;
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -90,21 +94,6 @@ public class WallteOutFragment extends BaseFragment {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case 0:
-                    if (refreshLayout!=null&&refreshLayout.isRefreshing()){
-                        refreshLayout.setRefreshing(false);
-                    }
-                    int count=msg.arg1;
-                    if (count==0){
-                        wagesList.clear();
-                    }
-                    DrawMoney jobs = (DrawMoney) msg.obj;
-                    wagesList.addAll(jobs.getData().getList_t_user_moneyout());
-                    adapter.notifyDataSetChanged();
-                    if (jobs.getData().getList_t_user_moneyout()!=null&&jobs.getData().getList_t_user_moneyout().size()>0){
-                        rlNull.setVisibility(View.GONE);
-                    }
-                    break;
                 case 1:
                     rlNull.setVisibility(View.VISIBLE);
                     String ErrorMessage = (String) msg.obj;
@@ -115,10 +104,6 @@ public class WallteOutFragment extends BaseFragment {
                 case 3:
                     String sms = (String) msg.obj;
                     Toast.makeText(getActivity(), sms, Toast.LENGTH_SHORT).show();
-                    break;
-                case 4:
-//                    BaseBean<CityBannerEntity> cityBannerEntityBaseBean = (BaseBean<CityBannerEntity>) msg.obj;
-//                    banners = cityBannerEntityBaseBean.getData().getList_t_banner();
                     break;
                 case 5:
                     wagesList.remove(delePosition);
@@ -160,14 +145,13 @@ public class WallteOutFragment extends BaseFragment {
         View view = inflater.inflate(R.layout.fragment_wallte, container, false);
         ButterKnife.bind(this, view);
         initview();
+        initListener();
         EventBus.getDefault().register(this);
         return view;
 
     }
 
     private void initview() {
-//        tvTitle.setText("兼职");
-//        imgBack.setVisibility(View.GONE);
         adapter = new WallteOutAdapter(wagesList, getActivity());
         mLayoutManager = new LinearLayoutManager(getActivity());
 //设置布局管理器
@@ -177,19 +161,30 @@ public class WallteOutFragment extends BaseFragment {
 //设置Item增加、移除动画
         list.setItemAnimator(new DefaultItemAnimator());
 //添加分割线
-//        recycleList.addItemDecoration(new RecyclerView.ItemDecoration() {
-//        });
-//        recycleList.addItemDecoration(new DividerItemDecoration(
-//                getActivity(), DividerItemDecoration.VERTICAL_LIST));
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                GetTask getTask = new GetTask(String.valueOf(loginId),"0");
-                getTask.execute();
+                HttpMethods.getInstance().getWageLog(getActivity(),new ProgressSubscriber<List<WageLog>>(listSubscriberOnNextListener,getActivity()),tel,2,1);
             }
         });
     }
-
+    private void initListener() {
+        listSubscriberOnNextListener=new SubscriberOnNextListener<List<WageLog>>() {
+            @Override
+            public void onNext(List<WageLog> wageLogs) {
+                if (refreshLayout!=null&&refreshLayout.isRefreshing()){
+                    refreshLayout.setRefreshing(false);
+                    wagesList.clear();
+                }
+                wagesList.addAll(wageLogs);
+                adapter.notifyDataSetChanged();
+                if (wagesList.size()>0){
+                    rlNull.setVisibility(View.GONE);
+                }
+                TastyToast.makeText(getActivity(),"获取成功",TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+            }
+        };
+    }
     @Override
     public int getContentViewId() {
         return R.layout.fragment_wallte;
@@ -197,15 +192,15 @@ public class WallteOutFragment extends BaseFragment {
 
     @Override
     public void onAttach(Context context) {
-        loginId = (int) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_USERID, 0);
+        tel = (String) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_TEL,"");
         super.onAttach(context);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        GetTask getTask = new GetTask(String.valueOf(loginId),"0");
-        getTask.execute();
+        refreshLayout.setRefreshing(true);
+        HttpMethods.getInstance().getWageLog(getActivity(),new ProgressSubscriber<List<WageLog>>(listSubscriberOnNextListener,getActivity()),tel,2,1);
     }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -215,9 +210,10 @@ public class WallteOutFragment extends BaseFragment {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (wagesList.size() > 5 && lastVisibleItem == wagesList.size() ) {
-                    GetTask getTask = new GetTask(String.valueOf(loginId),String.valueOf(lastVisibleItem));
-                    getTask.execute();
+                if (wagesList.size() >=10 && lastVisibleItem == wagesList.size() ) {
+                    int pageNum=wagesList.size()/10+1;
+                    HttpMethods.getInstance().getWageLog(getActivity(),new ProgressSubscriber<List<WageLog>>(listSubscriberOnNextListener,getActivity()),tel,2,pageNum);
+
                 }
             }
 

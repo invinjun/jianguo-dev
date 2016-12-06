@@ -159,9 +159,7 @@ public class SignUpPopuWin extends PopupWindow implements View.OnClickListener {
                 break;
             case R.id.tv_ok:
                 String tel = (String) SPUtils.getParam(context, Constants.LOGIN_INFO, Constants.SP_TEL, "");
-                long timeMillis = System.currentTimeMillis();
-                 String sign = MD5Util.getSign(context,timeMillis);
-                HttpMethods.getInstance().MpostSign(new ProgressSubscriber<String>(stringSubscriberOnNextListener,context),tel,sign, String.valueOf(timeMillis), String.valueOf(jobid));
+                HttpMethods.getInstance().MpostSign(context,new ProgressSubscriber<String>(stringSubscriberOnNextListener,context),tel, String.valueOf(jobid));
                 break;
         }
     }

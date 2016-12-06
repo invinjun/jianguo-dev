@@ -22,6 +22,7 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.adapter.HomeJobAdapter;
 import com.woniukeji.jianguo.adapter.LooperPageAdapter;
@@ -32,6 +33,7 @@ import com.woniukeji.jianguo.entity.Banner;
 import com.woniukeji.jianguo.entity.CityBannerEntity;
 import com.woniukeji.jianguo.entity.CityBean;
 import com.woniukeji.jianguo.entity.JobListBean;
+import com.woniukeji.jianguo.entity.Version;
 import com.woniukeji.jianguo.eventbus.CityEvent;
 import com.woniukeji.jianguo.eventbus.JobFilterEvent;
 import com.woniukeji.jianguo.eventbus.LoginEvent;
@@ -39,9 +41,12 @@ import com.woniukeji.jianguo.eventbus.MessageEvent;
 import com.woniukeji.jianguo.http.HttpMethods;
 import com.woniukeji.jianguo.http.ProgressSubscriberOnError;
 import com.woniukeji.jianguo.http.SubscriberOnNextErrorListener;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
 import com.woniukeji.jianguo.listener.PageClickListener;
 import com.woniukeji.jianguo.activity.partjob.PartJobActivity;
+import com.woniukeji.jianguo.utils.CommonUtils;
 import com.woniukeji.jianguo.utils.SPUtils;
+import com.woniukeji.jianguo.utils.UpDialog;
 import com.woniukeji.jianguo.widget.CircleImageView;
 import com.woniukeji.jianguo.widget.FixedRecyclerView;
 import com.woniukeji.jianguo.widget.LoopViewPager;
@@ -86,12 +91,11 @@ public class HomeFragment extends BaseFragment implements   View.OnClickListener
     public String cityCode;
     private boolean DataComplete = false;
     private int totalDy;
-    private String apkurl;
     private View view;
     private Unbinder bind;
     private SubscriberOnNextErrorListener<List<JobListBean>> listSubscriberOnNextListener;
     private SubscriberOnNextErrorListener<List<Banner>> bannerSubscriberOnNextListener;
-//    private CityBannerEntity mCityBannerEntity;
+    private SubscriberOnNextListener<Version> versionSubscriberOnNextListener;
     private int[] drawables = new int[]{R.mipmap.lead1, R.mipmap.lead2, R.mipmap.lead3};
     private LoopViewPager viewpager;
     private CircleIndicator indicator;
@@ -116,24 +120,6 @@ public class HomeFragment extends BaseFragment implements   View.OnClickListener
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EventBus.getDefault().register(this);
-//        int version = (int) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.LOGIN_VERSION, 0);
-//        apkurl = (String) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.LOGIN_APK_URL, "");
-//        if (version>getVersion()) {//大于当前版本升级
-//            new SweetAlertDialog(getActivity(), SweetAlertDialog.WARNING_TYPE)
-//                    .setTitleText("检测到新版本，是否更新？")
-//                    .setConfirmText("确定")
-//                    .setCancelText("取消")
-//                    .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
-//                        @Override
-//                        public void onClick(SweetAlertDialog sDialog) {
-//                            sDialog.dismissWithAnimation();
-//                            UpDialog upDataDialog = new UpDialog(getActivity(),apkurl);
-//                            upDataDialog.setCanceledOnTouchOutside(false);
-//                            upDataDialog.setCanceledOnTouchOutside(false);
-//                            upDataDialog.show();
-//                        }
-//                    }).show();
-//        }
         int choose= (int) SPUtils.getParam(getActivity(),Constants.LOGIN_INFO,Constants.USER_CHOOSED_LOCATION,0);
         if (choose==0){
             initLocationListener();
@@ -269,7 +255,7 @@ public class HomeFragment extends BaseFragment implements   View.OnClickListener
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (jobList.size() > 5 && lastVisibleItem == jobList.size() + 1 && DataComplete) {
+                if (jobList.size() >= 10 && lastVisibleItem == jobList.size() + 1 && DataComplete) {
                     isRefresh=false;
                     int page=jobList.size()/10+1;
                     HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,null,null,null, String.valueOf(page));     DataComplete = false;
@@ -296,15 +282,16 @@ public class HomeFragment extends BaseFragment implements   View.OnClickListener
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
+            //精品 1  长期 2   旅行 3    日结 4
             case R.id.img_gifts_job:
                 Intent intent = new Intent(getActivity(), PartJobActivity.class);
-                intent.putExtra("type", 2);
+                intent.putExtra("type", 1);
                 intent.putExtra("cityid", cityCode);
                 startActivity(intent);
                 break;
             case R.id.img_day_job:
                 Intent dayIntent = new Intent(getActivity(), PartJobActivity.class);
-                dayIntent.putExtra("type", 5);
+                dayIntent.putExtra("type", 4);
                 dayIntent.putExtra("cityid", cityCode);
                 startActivity(dayIntent);
                 break;
@@ -316,7 +303,7 @@ public class HomeFragment extends BaseFragment implements   View.OnClickListener
                 break;
             case R.id.img_my_job:
                 Intent LongIntent = new Intent(getActivity(), PartJobActivity.class);
-                LongIntent.putExtra("type", 6);
+                LongIntent.putExtra("type", 2);
                 LongIntent.putExtra("cityid", cityCode);
                 startActivity(LongIntent);
                 break;
@@ -345,7 +332,28 @@ public class HomeFragment extends BaseFragment implements   View.OnClickListener
             }
         };
         HttpMethods.getInstance().getBanner(new ProgressSubscriberOnError<List<Banner>>(bannerSubscriberOnNextListener,getActivity()));
-
+        versionSubscriberOnNextListener =new SubscriberOnNextListener<Version>() {
+            @Override
+            public void onNext(final Version version) {
+                int version1 = CommonUtils.getVersion(getActivity());
+                if (Integer.valueOf(version.getAndroid_business_version())>version1){
+                    new SweetAlertDialog(getActivity(), SweetAlertDialog.WARNING_TYPE)
+                            .setTitleText("检测到新版本，是否更新？")
+                            .setConfirmText("确定")
+                            .setCancelText("取消")
+                            .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                                @Override
+                                public void onClick(SweetAlertDialog sDialog) {
+                                    sDialog.dismissWithAnimation();
+                                    UpDialog upDataDialog = new UpDialog(getActivity(),version.getAndroid_business_url());
+                                    upDataDialog.setCanceledOnTouchOutside(false);
+                                    upDataDialog.setCanceledOnTouchOutside(false);
+                                    upDataDialog.show();
+                                }
+                            }).show();
+                }
+            }
+        };
         listSubscriberOnNextListener=new SubscriberOnNextErrorListener<List<JobListBean>>() {
             @Override
             public void onNext(List<JobListBean> listEntities) {
@@ -415,8 +423,6 @@ public class HomeFragment extends BaseFragment implements   View.OnClickListener
             EventBus.getDefault().post(jobFilterEvent);
         }
      //无论如何到保存最近设置的城市属性
-//     SPUtils.setParam(getActivity(), Constants.LOGIN_INFO, Constants.USER_LOCATION_CODE, cityCode);
-//     SPUtils.setParam(getActivity(), Constants.LOGIN_INFO, Constants.USER_LOCATION_NAME, cityName);
      }
 
     }

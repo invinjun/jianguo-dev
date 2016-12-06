@@ -18,13 +18,17 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.adapter.WallteInAdapter;
 import com.woniukeji.jianguo.base.BaseFragment;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.BaseBean;
-import com.woniukeji.jianguo.entity.Wage;
+import com.woniukeji.jianguo.entity.WageLog;
 import com.woniukeji.jianguo.eventbus.AttentionCollectionEvent;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriber;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.utils.SPUtils;
 import com.woniukeji.jianguo.widget.FixedRecyclerView;
@@ -62,15 +66,14 @@ public class WallteInFragment extends BaseFragment {
     private WallteInAdapter adapter;
     private int MSG_GET_SUCCESS = 0;
     private int MSG_GET_FAIL = 1;
-    private int MSG_DELETE_SUCCESS=5;
-    private int MSG_DELETE_FAIL=6;
-    public List<Wage.ListTWagesEntity> wagesList = new ArrayList<Wage.ListTWagesEntity>();
+    public List<WageLog> wagesList = new ArrayList<WageLog>();
     private Handler mHandler = new Myhandler(this.getActivity());
     private Context mContext = this.getActivity();
-    private int loginId;
+    private String tel;
     private int delePosition;
     private int lastVisibleItem;
     private LinearLayoutManager mLayoutManager;
+    private SubscriberOnNextListener<List<WageLog>> listSubscriberOnNextListener;
 
     @Override
     public void onDestroyView() {
@@ -91,21 +94,6 @@ public class WallteInFragment extends BaseFragment {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case 0:
-                     if (refreshLayout!=null&&refreshLayout.isRefreshing()){
-                         refreshLayout.setRefreshing(false);
-                     }
-                    int count=msg.arg1;
-                    if (count==0){
-                        wagesList.clear();
-                    }
-                    BaseBean<Wage> jobs = (BaseBean<Wage>) msg.obj;
-                    wagesList.addAll(jobs.getData().getList_t_wages());
-                    adapter.notifyDataSetChanged();
-                    if (jobs.getData().getList_t_wages()!=null&&jobs.getData().getList_t_wages().size()>0){
-                        rlNull.setVisibility(View.GONE);
-                    }
-                    break;
                 case 1:
                     rlNull.setVisibility(View.VISIBLE);
                     String ErrorMessage = (String) msg.obj;
@@ -116,10 +104,6 @@ public class WallteInFragment extends BaseFragment {
                 case 3:
                     String sms = (String) msg.obj;
                     Toast.makeText(getActivity(), sms, Toast.LENGTH_SHORT).show();
-                    break;
-                case 4:
-//                    BaseBean<CityBannerEntity> cityBannerEntityBaseBean = (BaseBean<CityBannerEntity>) msg.obj;
-//                    banners = cityBannerEntityBaseBean.getData().getList_t_banner();
                     break;
                 case 5:
                     wagesList.remove(delePosition);
@@ -141,7 +125,7 @@ public class WallteInFragment extends BaseFragment {
     public void onEvent(AttentionCollectionEvent event) {
         if (event.listTJob!=null){
             delePosition=event.position;
-//            DeleteTask deleteTask=new DeleteTask(String.valueOf(loginId),String.valueOf( event.listTJob.getId()));
+//            DeleteTask deleteTask=new DeleteTask(String.valueOf(tel),String.valueOf( event.listTJob.getId()));
 //            deleteTask.execute();
         }
     }
@@ -161,15 +145,36 @@ public class WallteInFragment extends BaseFragment {
         View view = inflater.inflate(R.layout.fragment_wallte, container, false);
         ButterKnife.bind(this, view);
         initview();
+        initListener();
         EventBus.getDefault().register(this);
         return view;
 
     }
+
+    private void initListener() {
+        listSubscriberOnNextListener=new SubscriberOnNextListener<List<WageLog>>() {
+            @Override
+            public void onNext(List<WageLog> wageLogs) {
+                if (refreshLayout!=null&&refreshLayout.isRefreshing()){
+                    refreshLayout.setRefreshing(false);
+                    wagesList.clear();
+                }
+                wagesList.addAll(wageLogs);
+                adapter.notifyDataSetChanged();
+                if (wagesList.size()>0){
+                    rlNull.setVisibility(View.GONE);
+                }
+                TastyToast.makeText(getActivity(),"获取成功",TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+            }
+        };
+    }
+
     @Override
     public int getContentViewId() {
         return R.layout.fragment_wallte;
     }
     private void initview() {
+        tel = (String) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_TEL, "");
 //        tvTitle.setText("兼职");
 //        imgBack.setVisibility(View.GONE);
         adapter = new WallteInAdapter(wagesList, getActivity());
@@ -188,8 +193,8 @@ public class WallteInFragment extends BaseFragment {
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                GetTask getTask = new GetTask(String.valueOf(loginId),"0");
-                getTask.execute();
+                HttpMethods.getInstance().getWageLog(getActivity(),new ProgressSubscriber<List<WageLog>>(listSubscriberOnNextListener,getActivity()),tel,1,1);
+
             }
         });
     }
@@ -201,9 +206,10 @@ public class WallteInFragment extends BaseFragment {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (wagesList.size() > 5 && lastVisibleItem == wagesList.size() ) {
-                    GetTask getTask = new GetTask(String.valueOf(loginId),String.valueOf(lastVisibleItem));
-                    getTask.execute();
+                if (wagesList.size() >=10 && lastVisibleItem == wagesList.size() ) {
+                    int pageNum=wagesList.size()/10+1;
+                    HttpMethods.getInstance().getWageLog(getActivity(),new ProgressSubscriber<List<WageLog>>(listSubscriberOnNextListener,getActivity()),tel,1,pageNum);
+
                 }
             }
 
@@ -222,9 +228,8 @@ public class WallteInFragment extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
-        loginId = (int) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_USERID, 0);
-        GetTask getTask = new GetTask(String.valueOf(loginId),"0");
-        getTask.execute();
+        refreshLayout.setRefreshing(true);
+        HttpMethods.getInstance().getWageLog(getActivity(),new ProgressSubscriber<List<WageLog>>(listSubscriberOnNextListener,getActivity()),tel,1,1);
     }
 
     @Override
@@ -232,155 +237,5 @@ public class WallteInFragment extends BaseFragment {
         super.onDetach();
     }
 
-
-    public class GetTask extends AsyncTask<Void, Void, Void> {
-        private final String count;
-        private final String loginId;
-
-        GetTask(String loginId,String count) {
-            this.loginId = loginId;
-            this.count=count;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-            try {
-                getJobs();
-            } catch (Exception e) {
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        /**
-         * postInfo
-         */
-        public void getJobs() {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.GET_WAGES_INFO)
-                    .addParams("only", only)
-                    .addParams("login_id", loginId)
-                    .addParams("count", count)
-                    .build()
-                    .connTimeOut(6000)
-                    .readTimeOut(2000)
-                    .writeTimeOut(2000)
-                    .execute(new Callback<BaseBean<Wage>>() {
-                        @Override
-                        public BaseBean parseNetworkResponse(Response response,int id) throws Exception {
-                            String string = response.body().string();
-                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean<Wage>>() {
-                            }.getType());
-                            return baseBean;
-                        }
-
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                            Message message = new Message();
-                            message.obj = e.toString();
-                            message.what = MSG_GET_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-                        @Override
-                        public void onResponse(BaseBean baseBean,int id) {
-                            if (baseBean.getCode().equals("200")) {
-//                                SPUtils.setParam(AuthActivity.this, Constants.LOGIN_INFO, Constants.SP_TYPE, "0");
-                                Message message = new Message();
-                                message.obj = baseBean;
-                                message.arg1= Integer.parseInt(count);
-                                message.what = MSG_GET_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_GET_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-                        }
-
-                    });
-        }
-    }
-//        public class DeleteTask extends AsyncTask<Void, Void, Void> {
-//        private final String loginId;
-//            private final String id;
 //
-//            DeleteTask(String loginId,String id) {
-//            this.loginId = loginId;
-//                this.id = id;
-//        }
-//
-//        @Override
-//        protected Void doInBackground(Void... params) {
-//            // TODO: attempt authentication against a network service.
-//            try {
-//                DeleteCollAtten();
-//            } catch (Exception e) {
-//            }
-//            return null;
-//        }
-//
-//        @Override
-//        protected void onPreExecute() {
-//            super.onPreExecute();
-//        }
-//
-//        /**
-//         * postInfo
-//         */
-//        public void DeleteCollAtten() {
-//            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-//            OkHttpUtils
-//                    .get()
-//                    .url(Constants.DELETE_COLLATTEN)
-//                    .addParams("only", only)
-//                    .addParams("login_id", loginId)
-//                    .addParams("id", id)
-//                    .addParams("type", "1")
-//                    .build()
-//                    .connTimeOut(6000)
-//                    .readTimeOut(20000)
-//                    .writeTimeOut(20000)
-//                    .execute(new Callback<BaseBean<Jobs>>() {
-//                        @Override
-//                        public BaseBean parseNetworkResponse(Response response) throws Exception {
-//                            String string = response.body().string();
-//                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean<Jobs>>() {
-//                            }.getType());
-//                            return baseBean;
-//                        }
-//
-//                        @Override
-//                        public void onError(Call call, Exception e) {
-//                            Message message = new Message();
-//                            message.obj = e.toString();
-//                            message.what = MSG_DELETE_FAIL;
-//                            mHandler.sendMessage(message);
-//                        }
-//
-//                        @Override
-//                        public void onResponse(BaseBean baseBean) {
-//                            if (baseBean.getCode().equals("200")) {
-//                                Message message = new Message();
-//                                message.what = MSG_DELETE_SUCCESS;
-//                                mHandler.sendMessage(message);
-//                            } else {
-//                                Message message = new Message();
-//                                message.obj = baseBean.getMessage();
-//                                message.what = MSG_DELETE_FAIL;
-//                                mHandler.sendMessage(message);
-//                            }
-//                        }
-//
-//                    });
-//        }
-//    }
 }

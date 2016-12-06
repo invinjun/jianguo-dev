@@ -39,7 +39,6 @@ public class PartJobAdapter extends RecyclerView.Adapter<PartJobAdapter.ViewHold
     private final Context mContext;
     public static final int NORMAL = 1;
     public static final int IS_FOOTER = 2;
-    private AnimationDrawable mAnimationDrawable;
     private boolean isFooterChange = false;
 
     public PartJobAdapter(List<JobListBean> items, Context context) {

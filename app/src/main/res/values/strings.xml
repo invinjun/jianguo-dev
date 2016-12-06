@@ -19,7 +19,7 @@
     <string name="title_activity_regist">regist</string>
     <string name="title_activity_login">兼果</string>
     <string name="title_activity_splash">SplashActivity</string>
-    <string-array name="region_string" >
+    <string-array name="region_string">
         <item>全国</item>
         <item>三亚</item>
         <item>海口</item>
@@ -28,14 +28,14 @@
         <item>杭州</item>
     </string-array>
 
-    <string-array name="type_string" >
+    <string-array name="type_string">
         <item>短期</item>
         <item>长期</item>
         <item>实习生</item>
         <item>寒/暑假工</item>
     </string-array>
 
-    <string-array name="jobs_string" >
+    <string-array name="jobs_string">
         <item>不限</item>
         <item>礼仪模特</item>
         <item>摄影助理</item>

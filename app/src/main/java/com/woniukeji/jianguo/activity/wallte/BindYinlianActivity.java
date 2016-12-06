@@ -15,11 +15,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.activity.BaseActivity;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.BaseBean;
 import com.woniukeji.jianguo.entity.BaseCallback;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriber;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.utils.SPUtils;
 import com.zhy.http.okhttp.OkHttpUtils;
@@ -41,14 +45,10 @@ public class BindYinlianActivity extends BaseActivity {
     @BindView(R.id.ll_bank) LinearLayout llBank;
     @BindView(R.id.et_bank_number) EditText etBankNumber;
     @BindView(R.id.btn_save_yinlian) Button btnSaveYinlian;
-    private int MSG_USER_SUCCESS = 0;
-    private int MSG_USER_FAIL = 1;
     private Handler mHandler = new Myhandler(this);
     private Context context = BindYinlianActivity.this;
-    private int merchartid;
-    private String password;
-    private String newPassWord;
-    private int loginid;
+    private SubscriberOnNextListener<String> stringSubscriberOnNextListener;
+    private String tel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +72,6 @@ public class BindYinlianActivity extends BaseActivity {
             BindYinlianActivity activity = (BindYinlianActivity) reference.get();
             switch (msg.what) {
                 case 0:
-//                    SPUtils.setParam(activity.context, Constants.USER_INFO,Constants.USER_PAY_PASS,activity.newPassWord);
                     String Message = (String) msg.obj;
                     Toast.makeText(activity, Message, Toast.LENGTH_SHORT).show();
                     Intent intent=activity.getIntent();
@@ -110,14 +109,19 @@ public class BindYinlianActivity extends BaseActivity {
 
     @Override
     public void initListeners() {
-
+        stringSubscriberOnNextListener =new SubscriberOnNextListener<String>() {
+            @Override
+            public void onNext(String s) {
+                TastyToast.makeText(context,"账户绑定成功",TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+                finish();
+            }
+        };
     }
 
     @Override
     public void initData() {
 //        SPUtils.setParam(context,Constants.USER_INFO,Constants.USER_MERCHANT_ID,user.getT_merchant().getId());
-          loginid = (int) SPUtils.getParam(BindYinlianActivity.this, Constants.LOGIN_INFO, Constants.SP_USERID, 0);
-//        password = (String) SPUtils.getParam(context, Constants.USER_INFO, Constants.USER_PAY_PASS,"");
+        tel = (String) SPUtils.getParam(BindYinlianActivity.this, Constants.LOGIN_INFO, Constants.SP_TEL, "");
 
     }
 
@@ -145,101 +149,11 @@ public class BindYinlianActivity extends BaseActivity {
                     showShortToast("请输入银行卡号");
                     return;
                 }
-                postTask postTask=new postTask(String.valueOf(loginid),etYinlianName.getText().toString(),"0"
-                        ,etBankName.getText().toString(),etBankNumber.getText().toString());
-                postTask.execute();
+                HttpMethods.getInstance().putWalletInfo(BindYinlianActivity.this,new ProgressSubscriber<String>(stringSubscriberOnNextListener,context), tel,1,etBankName.getText().toString(),etBankNumber.getText().toString(),etYinlianName.getText().toString());
+
                 break;
         }
     }
 
-    /**
-     * 保存阿里信息Task
-     */
-    public class postTask extends AsyncTask<Void, Void, Void> {
 
-        private final String id;
-        private final String name;
-        private final String zhifubao;
-        private final String yinlian;
-        private final String kahao;
-        SweetAlertDialog pDialog = new SweetAlertDialog(BindYinlianActivity.this, SweetAlertDialog.PROGRESS_TYPE);
-
-        postTask(String id, String name,String zhifubao,String yinlian,String kahao) {
-            this.id = id;
-            this.name = name;
-            this.zhifubao = zhifubao;
-            this.yinlian = yinlian;
-            this.kahao = kahao;
-        }
-
-        protected Void doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-            UserRegisterPhone();
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            pDialog.getProgressHelper().setBarColor(Color.parseColor("#A5DC86"));
-            pDialog.setTitleText("保存中...");
-            pDialog.setCancelable(false);
-            pDialog.show();
-        }
-
-        @Override
-        protected void onPostExecute(final Void user) {
-            pDialog.dismiss();
-        }
-
-        /**
-         * UserRegisterPhone
-         * 修改密码
-         */
-        public void UserRegisterPhone() {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.POST_ALIPAY_INFO)
-                    .addParams("only", only)
-                    .addParams("type", "1")
-                    .addParams("login_id", id)
-                    .addParams("name", name)
-                    .addParams("zhifubao", zhifubao)
-                    .addParams("yinhang", yinlian)
-                    .addParams("kahao", kahao)
-                    .build()
-                    .connTimeOut(30000)
-                    .readTimeOut(20000)
-                    .writeTimeOut(20000)
-                    .execute(new BaseCallback() {
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                            Message message = new Message();
-                            message.obj = e.getMessage();
-                            message.what = MSG_USER_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-
-                        @Override
-                        public void onResponse(BaseBean response,int id) {
-                            if (response.getCode().equals("200")) {
-                                Message message = new Message();
-                                message.obj = response.getMessage();
-                                message.what = MSG_USER_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = response.getMessage();
-                                message.what = MSG_USER_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-
-                        }
-
-
-                    });
-        }
-    }
 }

@@ -378,9 +378,7 @@ public class ResumeActivity extends BaseActivity {
         int First = (int) SPUtils.getParam(ResumeActivity.this, Constants.LOGIN_INFO, Constants.SP_FIRST, 0);
         if (First < 2) {
         }
-        long timeMillis = System.currentTimeMillis();
-        String sign = MD5Util.getSign(ResumeActivity.this,timeMillis);
-        HttpMethods.getInstance().userInfo(new ProgressSubscriber<Resume>(infoSubscriberOnNextListener, context), tel,sign, String.valueOf(timeMillis));
+        HttpMethods.getInstance().userInfo(this,new ProgressSubscriber<Resume>(infoSubscriberOnNextListener, context), tel);
 
     }
 
@@ -521,8 +519,7 @@ public class ResumeActivity extends BaseActivity {
             //未选择头像的时候，直接提交头像以前的url，如果更新了头像则上传图片
             if (realFilePath == null || realFilePath.equals("")) {
                 long timeMillis = System.currentTimeMillis();
-                String sign = MD5Util.getSign(ResumeActivity.this,timeMillis);
-                HttpMethods.getInstance().postResum(new ProgressSubscriber<String>(realSubscriberOnNextListener, context), tel,sign, String.valueOf(timeMillis),
+                HttpMethods.getInstance().postResum(this,new ProgressSubscriber<String>(realSubscriberOnNextListener, context), tel,
                         etRealName.getText().toString().trim(), etNickName.getText().toString(),school_id, tall, student, url2,
                         date, birDate, sex,etEmail.getText().toString(), qq,etAbout.getText().toString());
             } else {
@@ -617,8 +614,7 @@ public class ResumeActivity extends BaseActivity {
                 url2 = "http://7xlell.com2.z0.glb.qiniucdn.com/" + key;
                 circleProDialog.dismiss();
                 long timeMillis = System.currentTimeMillis();
-                String sign = MD5Util.getSign(ResumeActivity.this,timeMillis);
-                HttpMethods.getInstance().postResum(new ProgressSubscriber<String>(realSubscriberOnNextListener, context), tel,sign, String.valueOf(timeMillis),
+                HttpMethods.getInstance().postResum(ResumeActivity.this,new ProgressSubscriber<String>(realSubscriberOnNextListener, context), tel,
                         etRealName.getText().toString().trim(), etNickName.getText().toString(), school_id, tall, student, url2,
                         date, birDate, sex,etEmail.getText().toString(),qq  ,etAbout.getText().toString());
             }

@@ -157,9 +157,7 @@ public class SchoolActivity extends BaseActivity {
         CityAreaDao cityAreaDao=new CityAreaDao(this);
         CityBean cityBean = cityAreaDao.queryCitySelected();
         String cityCode=cityBean.getCode();
-        long timeMillis = System.currentTimeMillis();
-        String sign = MD5Util.getSign(SchoolActivity.this,timeMillis);
-        HttpMethods.getInstance().getSchool(new ProgressSubscriber(subscriberOnNextListener,this), tel,sign,String.valueOf(timeMillis),cityCode);
+        HttpMethods.getInstance().getSchool(SchoolActivity.this,new ProgressSubscriber(subscriberOnNextListener,this), tel,cityCode);
 
     }
 

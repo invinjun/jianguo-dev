@@ -115,8 +115,6 @@ public class SplashActivity extends BaseActivity  {
     public void initViews() {
         //初始化SDK
         ShareSDK.initSDK(this);
-
-//        Picasso.with(context).load(R.mipmap.splash).into(imgSplash);
     }
 
     @Override
@@ -135,6 +133,7 @@ public class SplashActivity extends BaseActivity  {
             public void onError(String mes) {
                 super.onError(mes);
                 TastyToast.makeText(SplashActivity.this, mes, TastyToast.LENGTH_LONG, TastyToast.ERROR);
+                SPUtils.deleteParams(context);
                 startActivity(new Intent(SplashActivity.this, MainActivity.class));
                 finish();
             }
@@ -191,27 +190,9 @@ public class SplashActivity extends BaseActivity  {
         SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_RESUMM, user.getResume());
         SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_NICK, user.getNickName()!= null ? user.getNickName() : "");
         SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_IMG, user.getHead_img_url() != null ? user.getHead_img_url() : "");
+        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_USERID, user.getId());
 
 
-
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_WQTOKEN, user.getT_user_login().getQqwx_token() != null ? user.getT_user_login().getQqwx_token() : "");
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_TEL, user.getT_user_login().getTel() != null ? user.getT_user_login().getTel() : "");
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_PASSWORD, user.getT_user_login().getPassword() != null ? user.getT_user_login().getPassword() : "");
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_USERID, user.getT_user_login().getId());
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_STATUS, user.getT_user_login().getStatus());
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_QNTOKEN, user.getT_user_login().getQiniu());
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.SP_RESUMM, user.getT_user_login().getResume());
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.LOGIN_APK_URL, user.getApk_url());
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.LOGIN_VERSION, user.getVersion());
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.LOGIN_CONTENT, user.getContent());
-//        SPUtils.setParam(context, Constants.LOGIN_INFO, Constants.LOGIN_HOBBY, user.getT_user_login().getHobby());
-//        SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_NICK, user.getT_user_info().getNickname() != null ? user.getT_user_info().getNickname() : "");
-//        SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_NAME, user.getT_user_info().getName() != null ? user.getT_user_info().getName() : "");
-//        SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_IMG, user.getT_user_info().getName_image() != null ? user.getT_user_info().getName_image() : "");
-//        SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_SCHOOL, user.getT_user_info().getSchool() != null ? user.getT_user_info().getSchool() : "");
-//        SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_CREDIT, user.getT_user_info().getCredit());
-//        SPUtils.setParam(context, Constants.USER_INFO, Constants.SP_INTEGRAL, user.getT_user_info().getIntegral());
-//        SPUtils.setParam(context, Constants.USER_INFO, Constants.USER_SEX, user.getT_user_info().getUser_sex());
         if (!TextUtils.isEmpty(String.valueOf(user.getId()))) {
             //登陆leancloud服务器 给极光设置别名
             LCChatKit.getInstance().open(String.valueOf(user.getId()), new AVIMClientCallback() {
@@ -226,7 +207,6 @@ public class SplashActivity extends BaseActivity  {
                         Intent intent = new Intent(SplashActivity.this, MainActivity.class);
                         startActivity(intent);
                         finish();
-// Toast.makeText(SplashActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -283,12 +263,18 @@ public class SplashActivity extends BaseActivity  {
      * 根据保存的登陆信息 跳转不同界面
      */
     private void chooseActivity() {
+        int updata = (int) SPUtils.getParam(context, Constants.LOGIN_INFO, Constants.SP_UPADATA, 0);
+          if(updata==0){
+              SPUtils.deleteParams(context);
+              SPUtils.setParam(context,Constants.LOGIN_INFO,Constants.SP_UPADATA,1);
+          }
+
         int loginType = (int) SPUtils.getParam(context, Constants.LOGIN_INFO, Constants.SP_TYPE, 0);
-        if (mCityId.equals("0")||mCityName.equals("")){
-            //如果定位失败，则获取上次登陆保存在sp的地理位置信息
-            mCityId = (String) SPUtils.getParam(context, Constants.USER_INFO, Constants.USER_LOCATION_CODE, "0");
-            mCityName = (String) SPUtils.getParam(context, Constants.USER_INFO, Constants.USER_LOCATION_NAME, "");
-        }
+//        if (mCityId.equals("0")||mCityName.equals("")){
+//            //如果定位失败，则获取上次登陆保存在sp的地理位置信息
+//            mCityId = (String) SPUtils.getParam(context, Constants.USER_INFO, Constants.USER_LOCATION_CODE, "0");
+//            mCityName = (String) SPUtils.getParam(context, Constants.USER_INFO, Constants.USER_LOCATION_NAME, "");
+//        }
 
         if (loginType==0){
             startActivity(new Intent(context, LeadActivity.class));

@@ -28,6 +28,9 @@ import com.woniukeji.jianguo.entity.BaseBean;
 import com.woniukeji.jianguo.entity.CityCategory;
 import com.woniukeji.jianguo.entity.JobListBean;
 import com.woniukeji.jianguo.entity.Jobs;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriberOnError;
+import com.woniukeji.jianguo.http.SubscriberOnNextErrorListener;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.widget.FixedRecyclerView;
 import com.zhy.http.okhttp.OkHttpUtils;
@@ -56,7 +59,6 @@ public class PartJobActivity extends BaseActivity {
     @BindView(R.id.img_menu) ImageView imgMenu;
     @BindView(R.id.img_renwu) ImageView imgRenwu;
     @BindView(R.id.rl_null) RelativeLayout rlNull;
-    private String headers[] = {"职业", "排序", "地区"};
     private PartJobAdapter adapter;
     private int lastVisibleItem;
     private LinearLayoutManager mLayoutManager;
@@ -65,9 +67,11 @@ public class PartJobActivity extends BaseActivity {
     private int MSG_GET_FAIL = 1;
     BaseBean<CityCategory> cityCategoryBaseBean;
     private Handler mHandler = new Myhandler(this);
-    private DropDownMenu mMenu;
     private String cityid="010";
-    private int type= 0;
+    private int type= 1;
+    private SubscriberOnNextErrorListener<List<JobListBean>> listSubscriberOnNextListener;
+    private boolean isRefresh=true;
+    private boolean DataComplete;
 
     @Override
     public void onClick(View v) {
@@ -106,12 +110,9 @@ public class PartJobActivity extends BaseActivity {
                     if (jobs.getData().getList_t_job().size() == 0) {
                         rlNull.setVisibility(View.VISIBLE);
                     }
-//                    jobList.addAll(jobs.getData().getList_t_job());
                     adapter.notifyDataSetChanged();
                     break;
                 case 1:
-//                    String ErrorMessage = (String) msg.obj;
-//                    Toast.makeText(mainActivity, ErrorMessage, Toast.LENGTH_SHORT).show();
                     break;
                 case 2:
                     rlNull.setVisibility(View.VISIBLE);
@@ -140,8 +141,6 @@ public class PartJobActivity extends BaseActivity {
     public void setContentView() {
         setContentView(R.layout.activity_part_job);
         ButterKnife.bind(this);
-//        EventBus.getDefault().register(this);
-//        initDropDownView();
     }
 
     @Override
@@ -155,16 +154,12 @@ public class PartJobActivity extends BaseActivity {
 //设置Item增加、移除动画
         list.setItemAnimator(new DefaultItemAnimator());
 //添加分割线
-//        recycleList.addItemDecoration(new RecyclerView.ItemDecoration() {
-//        });
-//        recycleList.addItemDecoration(new DividerItemDecoration(
-//                getActivity(), DividerItemDecoration.VERTICAL_LIST));
         refreshLayout.setColorSchemeResources(R.color.app_bg);
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                GetTask getTask = new GetTask(String.valueOf(type), "0");
-                getTask.execute();
+                isRefresh=true;
+                HttpMethods.getInstance().getJobListOfType(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,PartJobActivity.this),cityid,null,null,null, "1",type);
             }
         });
     }
@@ -173,23 +168,47 @@ public class PartJobActivity extends BaseActivity {
     public void initData() {
         Intent intent = getIntent();
         cityid = intent.getStringExtra("cityid");
-        type = intent.getIntExtra("type", 2);
+        type = intent.getIntExtra("type", 1);
+        //精品 1长期 2旅行 3日结 4
         if (type==3){
             tvTitle.setText("兼职旅行");
-        }else if(type==5){
+        }else if(type==4){
             tvTitle.setText("日结兼职");
-        }else if(type==2){//2
+        }else if(type==1){//2
             tvTitle.setText("精品兼职");
         }else{
             tvTitle.setText("长期兼职");
         }
-        GetTask getTask = new GetTask(String.valueOf(type), "0");
-        getTask.execute();
+        isRefresh=true;
+        HttpMethods.getInstance().getJobListOfType(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,PartJobActivity.this),cityid,null,null,null, "1",type);
+
     }
 
     @Override
     public void initListeners() {
+        listSubscriberOnNextListener=new SubscriberOnNextErrorListener<List<JobListBean>>() {
+            @Override
+            public void onNext(List<JobListBean> listEntities) {
+                if (refreshLayout != null && refreshLayout.isRefreshing()) {
+                    refreshLayout.setRefreshing(false);
+                    jobList.clear();
+                }
+                if (isRefresh){
+                    jobList.clear();
+                }
+                jobList.addAll(listEntities);
+                adapter.notifyDataSetChanged();
+                DataComplete = true;
+            }
 
+            @Override
+            public void onError(String mes) {
+                super.onError(mes);
+                if (refreshLayout != null && refreshLayout.isRefreshing()) {
+                    refreshLayout.setRefreshing(false);
+                }
+            }
+        };
     }
 
     @Override
@@ -201,8 +220,11 @@ public class PartJobActivity extends BaseActivity {
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (jobList.size() > 5 && lastVisibleItem == jobList.size() + 1) {
-                    GetTask getTask = new GetTask(String.valueOf(type),String.valueOf(lastVisibleItem));
-                    getTask.execute();
+                    isRefresh=false;
+                    int page=jobList.size()/10+1;
+                    HttpMethods.getInstance().getJobListOfType(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,PartJobActivity.this),cityid,null,null,null, String.valueOf(page),type);
+                    DataComplete = false;
+
                 }
             }
 
@@ -229,192 +251,6 @@ public class PartJobActivity extends BaseActivity {
     }
 
 
-    public class GetTask extends AsyncTask<Void, Void, Void> {
-        private String type;
-        private String count;
 
-        GetTask(String type, String count) {
-            this.type = type;
-            this.count = count;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-            try {
-                if (type.equals("5")) {
-                    getDayJobs();//日结
-                } else if(type.equals("2")||type.equals("3")){
-                    getJobs();//兼职旅行和精品兼职
-                }else{
-                    getLongJobs();
-                }
-
-            } catch (Exception e) {
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-        /**
-         * postInfo
-         */
-        public void getLongJobs() {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.GET_JOB_LONG)
-                    .addParams("only", only)
-                    .addParams("city_id", String.valueOf(cityid))
-                    .addParams("count", count)
-                    .build()
-                    .connTimeOut(6000)
-                    .readTimeOut(20000)
-                    .writeTimeOut(20000)
-                    .execute(new Callback<BaseBean<Jobs>>() {
-                        @Override
-                        public BaseBean parseNetworkResponse(Response response,int id) throws Exception {
-                            String string = response.body().string();
-                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean<Jobs>>() {
-                            }.getType());
-                            return baseBean;
-                        }
-
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                                                                     Message message = new Message();
-                            message.obj = e.toString();
-                            message.what = MSG_GET_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-                        @Override
-                        public void onResponse(BaseBean baseBean,int id) {
-                            if (baseBean.getCode().equals("200")) {
-//                                SPUtils.setParam(AuthActivity.this, Constants.LOGIN_INFO, Constants.SP_TYPE, "0");
-                                Message message = new Message();
-                                message.obj = baseBean;
-                                message.arg1= Integer.parseInt(count);
-                                message.what = MSG_GET_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_GET_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-                        }
-
-                    });
-        }
-        /**
-         * postInfo
-         */
-        public void getDayJobs() {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.GET_JOB_DAY)
-                    .addParams("only", only)
-                    .addParams("mode", "2")
-                    .addParams("city_id", String.valueOf(cityid))
-                    .addParams("count", count)
-                    .build()
-                    .connTimeOut(6000)
-                    .readTimeOut(20000)
-                    .writeTimeOut(20000)
-                    .execute(new Callback<BaseBean<Jobs>>() {
-                        @Override
-                        public BaseBean parseNetworkResponse(Response response,int id) throws Exception {
-                            String string = response.body().string();
-                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean<Jobs>>() {
-                            }.getType());
-                            return baseBean;
-                        }
-
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                            Message message = new Message();
-                            message.obj = e.toString();
-                            message.what = MSG_GET_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-                        @Override
-                        public void onResponse(BaseBean baseBean,int id) {
-                            if (baseBean.getCode().equals("200")) {
-//                                SPUtils.setParam(AuthActivity.this, Constants.LOGIN_INFO, Constants.SP_TYPE, "0");
-                                Message message = new Message();
-                                message.obj = baseBean;
-                                message.arg1= Integer.parseInt(count);
-                                message.what = MSG_GET_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_GET_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-                        }
-
-                    });
-        }
-
-        /**
-         * postInfo
-         */
-        public void getJobs() {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.GET_JOB)
-                    .addParams("only", only)
-                    .addParams("hot", type)
-                    .addParams("city_id", String.valueOf(cityid))
-                    .addParams("count", count)
-                    .build()
-                    .connTimeOut(6000)
-                    .readTimeOut(20000)
-                    .writeTimeOut(20000)
-                    .execute(new Callback<BaseBean<Jobs>>() {
-                        @Override
-                        public BaseBean parseNetworkResponse(Response response,int id) throws Exception {
-                            String string = response.body().string();
-                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean<Jobs>>() {
-                            }.getType());
-                            return baseBean;
-                        }
-
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                            Message message = new Message();
-                            message.obj = e.toString();
-                            message.what = MSG_GET_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-                        @Override
-                        public void onResponse(BaseBean baseBean,int id) {
-                            if (baseBean.getCode().equals("200")) {
-//                                SPUtils.setParam(AuthActivity.this, Constants.LOGIN_INFO, Constants.SP_TYPE, "0");
-                                Message message = new Message();
-                                message.obj = baseBean;
-                                message.arg1= Integer.parseInt(count);
-                                message.what = MSG_GET_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_GET_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-                        }
-
-                    });
-        }
-    }
 
 }

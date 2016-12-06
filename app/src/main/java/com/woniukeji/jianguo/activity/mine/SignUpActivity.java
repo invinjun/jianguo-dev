@@ -22,6 +22,7 @@ import com.woniukeji.jianguo.activity.BaseActivity;
 import com.woniukeji.jianguo.adapter.SignAdapter;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.BaseBean;
+import com.woniukeji.jianguo.entity.HttpResult;
 import com.woniukeji.jianguo.entity.Jobs;
 import com.woniukeji.jianguo.entity.JoinJob;
 import com.woniukeji.jianguo.eventbus.SignEvent;
@@ -56,10 +57,6 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
     @BindView(R.id.img_back) ImageView imgBack;
     @BindView(R.id.tv_title) TextView tvTitle;
     @BindView(R.id.img_share) ImageView imgShare;
-    private int MSG_GET_SUCCESS = 0;
-    private int MSG_GET_FAIL = 1;
-    private int MSG_POST_SUCCESS = 5;
-    private int MSG_POST_FAIL = 6;
     private Context mContext = SignUpActivity.this;
     private Handler mHandler = new Myhandler(mContext);
     private List<JoinJob> modleList = new ArrayList<>();
@@ -70,6 +67,7 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
     private int loginId;
     private int lastVisibleItem;
  private SubscriberOnNextListener<List<JoinJob>> stringSubscriberOnNextListener;
+    private SubscriberOnNextListener<HttpResult> baseBeanSubscriberOnNextListener;
     private String tel;
 
     @Override
@@ -78,14 +76,10 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
 
         EventBus.getDefault().unregister(this);
     }
-
+    //1 报名  2未录取 3 录取 4 取消报名
     @Override
-    public void RecyOnClick(int jobid, int offer, int position) {
-        if (offer == 11) {
-            //报名接口
-        }
-//        PostTask admitTask = new PostTask(String.valueOf(loginId), String.valueOf(jobid), String.valueOf(offer));
-//        admitTask.execute();
+    public void RecyOnClick(long jobid, int offer, int position) {
+        HttpMethods.getInstance().cancelJoin(SignUpActivity.this,new ProgressSubscriber<HttpResult>(baseBeanSubscriberOnNextListener,this), tel,String.valueOf(jobid),4);
 
     }
 
@@ -202,29 +196,38 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                long timeMillis = System.currentTimeMillis();
-                String sign = MD5Util.getSign(SignUpActivity.this,timeMillis);
                 int pageNum=1;
-                HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,sign, String.valueOf(timeMillis),pageNum);
+                HttpMethods.getInstance().getJoinJob(SignUpActivity.this,new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,pageNum);
             }
         });
 
     }
 
     public void onEvent(SignEvent signEvent) {
-        long timeMillis = System.currentTimeMillis();
-        String sign = MD5Util.getSign(SignUpActivity.this,timeMillis);
         int pageNum=1;
-        HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,sign, String.valueOf(timeMillis),pageNum);
+        HttpMethods.getInstance().getJoinJob(SignUpActivity.this,new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,pageNum);
 
     }
 
     @Override
     public void initListeners() {
+        baseBeanSubscriberOnNextListener=new SubscriberOnNextListener<HttpResult>() {
+            @Override
+            public void onNext(HttpResult baseBean) {
+                if (baseBean.getCode()==200) {
+                    TastyToast.makeText(SignUpActivity.this,"操作成功！", TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+                }
+            }
+        };
+
+
         stringSubscriberOnNextListener=new SubscriberOnNextListener<List<JoinJob>>() {
             @Override
             public void onNext(List<JoinJob> s) {
                 TastyToast.makeText(SignUpActivity.this,"操作成功！", TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+               if (refreshLayout.isRefreshing()){
+                   modleList.clear();
+               }
                 modleList.addAll(s);
                 adapter.notifyDataSetChanged();
             }
@@ -238,10 +241,9 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (modleList.size() > 5 && lastVisibleItem == modleList.size()) {
-                    long timeMillis = System.currentTimeMillis();
-                    String sign = MD5Util.getSign(SignUpActivity.this,timeMillis);
                     int pageNum=modleList.size()/10+1;
-                    HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,sign, String.valueOf(timeMillis),pageNum);
+                    refreshLayout.setRefreshing(true);
+                    HttpMethods.getInstance().getJoinJob(SignUpActivity.this,new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,SignUpActivity.this), tel,pageNum);
                 }
             }
 
@@ -256,9 +258,8 @@ public class SignUpActivity extends BaseActivity implements SignAdapter.RecyCall
     @Override
     public void initData() {
         tel = (String) SPUtils.getParam(this, Constants.LOGIN_INFO, Constants.SP_TEL, "");
-        long timeMillis = System.currentTimeMillis();
-        String sign = MD5Util.getSign(this,timeMillis);
-        HttpMethods.getInstance().getJoinJob(new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,this), tel,sign, String.valueOf(timeMillis), 1);
+        refreshLayout.setRefreshing(true);
+        HttpMethods.getInstance().getJoinJob(this,new ProgressSubscriber<List<JoinJob>>(stringSubscriberOnNextListener,this), tel, 1);
     }
 
     @Override

@@ -12,64 +12,81 @@ package com.woniukeji.jianguo.entity;
  id_number    身份证号
  sex	     性别
  */
-public class RealName {
-    public T_user_realname getT_user_realname() {
-        return t_user_realname;
-    }
+public  class RealName {
+        /**
+         * IDcard : 152103199009087211
+         * sex : 1
+         * id : 800630391256780800
+         * auth_status : 1
+         * type : 1
+         * front_img_url :
+         * behind_img_url :
+         * realname : 谢军
+         */
 
-    public void setT_user_realname(T_user_realname t_user_realname) {
-        this.t_user_realname = t_user_realname;
-    }
-
-    private T_user_realname t_user_realname;
-    public  class T_user_realname{
-        private String id;
-        private String login_id;
-        private String front_image;
-        private String behind_image;
+        private String IDcard;
+        private int sex;
+        private long id;
+        private int auth_status;
+        private int type;
+        private String front_img_url;
+        private String behind_img_url;
         private String realname;
-        private String id_number;
-        private String sex;
-        private int status;
 
-        public int getStatus() {
-            return status;
+        public String getIDcard() {
+            return IDcard;
         }
 
-        public void setStatus(int status) {
-            this.status = status;
+        public void setIDcard(String IDcard) {
+            this.IDcard = IDcard;
         }
 
-        public String getId() {
+        public int getSex() {
+            return sex;
+        }
+
+        public void setSex(int sex) {
+            this.sex = sex;
+        }
+
+        public long getId() {
             return id;
         }
 
-        public void setId(String id) {
+        public void setId(long id) {
             this.id = id;
         }
 
-        public String getLogin_id() {
-            return login_id;
+        public int getAuth_status() {
+            return auth_status;
         }
 
-        public void setLogin_id(String login_id) {
-            this.login_id = login_id;
+        public void setAuth_status(int auth_status) {
+            this.auth_status = auth_status;
         }
 
-        public String getFront_image() {
-            return front_image;
+        public int getType() {
+            return type;
         }
 
-        public void setFront_image(String front_image) {
-            this.front_image = front_image;
+        public void setType(int type) {
+            this.type = type;
         }
 
-        public String getBehind_image() {
-            return behind_image;
+        public String getFront_img_url() {
+            return front_img_url;
         }
 
-        public void setBehind_image(String behind_image) {
-            this.behind_image = behind_image;
+        public void setFront_img_url(String front_img_url) {
+            this.front_img_url = front_img_url;
+        }
+
+        public String getBehind_img_url() {
+            return behind_img_url;
+        }
+
+        public void setBehind_img_url(String behind_img_url) {
+            this.behind_img_url = behind_img_url;
         }
 
         public String getRealname() {
@@ -79,22 +96,4 @@ public class RealName {
         public void setRealname(String realname) {
             this.realname = realname;
         }
-
-        public String getId_number() {
-            return id_number;
-        }
-
-        public void setId_number(String id_number) {
-            this.id_number = id_number;
-        }
-
-        public String getSex() {
-            return sex;
-        }
-
-        public void setSex(String sex) {
-            this.sex = sex;
-        }
-    }
-
 }

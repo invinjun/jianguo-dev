@@ -111,6 +111,7 @@ public class JobDetailActivity extends BaseActivity {
     private List<String> welfareBeens = new ArrayList<>();
     private String tel;
     private String wagesStr;
+    private long mUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,7 +215,7 @@ public class JobDetailActivity extends BaseActivity {
         jobid = intent.getLongExtra("job",0);
 //        strStatus = intent.getStringExtra("jobStatus");
         tel = (String) SPUtils.getParam(mContext, Constants.LOGIN_INFO, Constants.SP_TEL,"");
-//        resume = (String) SPUtils.getParam(mContext, Constants.LOGIN_INFO, Constants.SP_RESUMM, "");
+        mUserId =(long) SPUtils.getParam(mContext, Constants.LOGIN_INFO, Constants.SP_USERID, 0l);
 //        sex = (String) SPUtils.getParam(mContext, Constants.USER_INFO, Constants.USER_SEX, "");
         String token= (String) SPUtils.getParam(this, Constants.LOGIN_INFO,Constants.SP_WQTOKEN,"");
         HttpMethods.getInstance().getJobDetailNew(new ProgressSubscriber<JobInfo>(subscriberOnNextListener, this), String.valueOf(jobid),token);
@@ -312,13 +313,13 @@ public class JobDetailActivity extends BaseActivity {
 //            startActivity(new Intent(JobDetailActivity.this, LoginActivity.class));
 //            return;
 //        }
-        LCChatKit.getInstance().open(String.valueOf(jobInfo.getId()), new AVIMClientCallback() {
+        LCChatKit.getInstance().open(String.valueOf(mUserId), new AVIMClientCallback() {
             @Override
             public void done(AVIMClient avimClient, AVIMException e) {
                 if (null == e) {
                     finish();
                     Intent intent = new Intent(JobDetailActivity.this, LCIMConversationActivity.class);
-                    intent.putExtra(LCIMConstants.PEER_ID, String.valueOf(mJobInfo.getId())); //String.valueOf(t_job_info.getId())
+                    intent.putExtra(LCIMConstants.PEER_ID, String.valueOf(mJobInfo.getUser_id())); //String.valueOf(t_job_info.getId())
                     intent.putExtra("job_name",mJobInfo.getJob_name());
                     startActivity(intent);
                 } else {
@@ -386,7 +387,6 @@ public class JobDetailActivity extends BaseActivity {
 
     /**
      * 分享兼职
-     *
      * @author invinjun
      * created at 2016/8/18 15:49
      */
@@ -469,7 +469,7 @@ public class JobDetailActivity extends BaseActivity {
 
 
 
-        if (jobInfo.getJob_name().contains("合作商家")){
+        if (jobInfo.getContact_name().contains("合作商家")){
             imgPass.setVisibility(View.GONE);
             tvJobsCount.setVisibility(View.VISIBLE);
             tvPayMethod.setText(jobInfo.getMode_name()+"（商家自结）");

@@ -12,14 +12,67 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginBottom="20dp"
     android:orientation="vertical"
     android:background="@color/gray_btn_bg_color"
     >
 
-    <include
-        android:id="@+id/top"
-        layout="@layout/app_title_bar"
-        />
+    <RelativeLayout
+                    android:background="@color/app_bg"
+                    style="@style/title_bar_style">
+
+        <ImageView
+            android:id="@+id/img_back"
+            android:src="@mipmap/icon_back"
+            android:layout_width="30dp"
+            android:paddingLeft="3dp"
+            android:paddingRight="8dp"
+            android:layout_height="30dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
+            android:layout_marginLeft="23dp"
+            android:layout_centerVertical="true"
+            />
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textSize="18dp"
+            android:maxEms="8"
+            android:textColor="@color/white"
+            android:text="@string/app_name"
+            android:maxLines="1"
+            android:ellipsize="end"
+            />
+        <ImageView
+            android:id="@+id/img_share"
+            android:src="@mipmap/icon_share"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginRight="15dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:layout_marginLeft="23dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:visibility="gone"
+            />
+        <TextView
+            android:id="@+id/tv_setting"
+            android:layout_width="wrap_content"
+            android:layout_height="22dp"
+            android:text="编辑"
+            android:textColor="@color/white"
+            android:layout_marginRight="15dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:layout_marginLeft="23dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:visibility="visible"
+            />
+    </RelativeLayout>
     <RelativeLayout
         android:id="@+id/rl_alipay"
         android:layout_width="match_parent"
@@ -140,6 +193,7 @@
         android:background="@color/white"
         android:paddingLeft="15dp"
         android:layout_marginTop="5dp"
+        android:visibility="gone"
         >
         <ImageView
             android:id="@+id/img_wx"
@@ -305,12 +359,13 @@
     <Button
         android:id="@+id/btn_post"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginRight="50dp"
-        android:layout_marginLeft="50dp"
+        android:layout_height="42dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginLeft="30dp"
         android:layout_marginTop="80dp"
         android:text="提现"
         android:textColor="@color/white"
+        android:layout_marginBottom="20dp"
         android:background="@drawable/button_background_login"
         />
 </LinearLayout>

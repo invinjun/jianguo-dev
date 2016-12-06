@@ -25,12 +25,17 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.activity.BaseActivity;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.Balance;
+import com.woniukeji.jianguo.entity.BindInfo;
+import com.woniukeji.jianguo.entity.PayInfo;
 import com.woniukeji.jianguo.entity.SmsCode;
+import com.woniukeji.jianguo.entity.WageLog;
+import com.woniukeji.jianguo.http.BackgroundSubscriber;
 import com.woniukeji.jianguo.http.HttpMethods;
 import com.woniukeji.jianguo.http.NoProgressSubscriber;
 import com.woniukeji.jianguo.http.ProgressSubscriber;
@@ -41,9 +46,11 @@ import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.Callback;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import butterknife.BindView;
@@ -89,33 +96,32 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
     @BindView(R.id.rb_wxpay) RadioButton rbWXpay;
     @BindView(R.id.img_go03) ImageView imgGo03;
     @BindView(R.id.tv_tel) TextView tvTel;
+    @BindView(R.id.tv_setting) TextView tvSetting;
 
-    private Balance balance;
     private Handler mHandler = new Myhandler(this);
     private String type = "";
-    private int loginid=0;
+    private String tel="";
+    private BindInfo YinLInBindInfo;
+    private BindInfo AlipayBindInfo;
     private double blanceMoney;
-    private String sms;
     private TimeCount time;
     private SubscriberOnNextListener<String> weixinSubscriberOnNextListener;
     private SubscriberOnNextListener<String> SmsSubscriberOnNextListener;
     private SubscriberOnNextListener<String> MoneySubscriberOnNextListener;
+    private SubscriberOnNextListener<List<BindInfo>> balanceSubscriberOnNextListener;
+    private ArrayList<BindInfo> bindInfos=new ArrayList<>();
     private ProgressDialog progressDialog;
+    private long userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
-
-
     private static class Myhandler extends Handler {
         private WeakReference<Context> reference;
-
-
         public Myhandler(Context context) {
             reference = new WeakReference<>(context);
         }
-
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -131,8 +137,6 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
                     Toast.makeText(activity, ErrorMessage, Toast.LENGTH_SHORT).show();
                     break;
                 case 2:
-                    SmsCode smsCode = (SmsCode) msg.obj;
-                    activity.sms = smsCode.getText();
                     activity.showShortToast("验证码已经发送，请注意查收");
                     break;
                 case 3:
@@ -164,7 +168,6 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
             AlertDialog.Builder builder = new AlertDialog.Builder(DrawMoneyActivity.this);
             builder.setTitle("温馨提示");
             builder.setMessage("尊敬的用户，您的提现申请将会在每天的8:00-21:00为您处理，请您耐心等待提现结果，给您带来的不便，敬请谅解");
-//          sweetAlertDialog.set("尊敬的用户，兼果提现申请的处理时间为每日的8:00-21:00，请您耐心等待提现结果，给您带来的不便，敬请谅解");
             builder.setOnCancelListener(new OnCancelListener() {
                 @Override
                 public void onCancel(DialogInterface dialog) {
@@ -191,10 +194,51 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
             public void onNext(String message) {
                 showLongToast("提现申请成功!", TastyToast.SUCCESS);
                 finish();
-//                showDialog();
             }
         };
+        balanceSubscriberOnNextListener=new SubscriberOnNextListener<List<BindInfo>>() {
+            @Override
+            public void onNext(List<BindInfo> balances) {
+                bindInfos.clear();
+                if (balances.size()==0) {
+                    tvSetting.setVisibility(View.GONE);
+                }else {
+                    tvSetting.setVisibility(View.VISIBLE);
+                    bindInfos.addAll(balances);
+                        for (BindInfo bindInfo : balances) {
+                            if (bindInfo.getType() == 1) {
+                                imgGo02.setVisibility(View.GONE);
+                                rbYinlian.setVisibility(View.VISIBLE);
+                                rbYinlian.setChecked(true);
+                                rbAilipay.setChecked(false);
+                                tvYinlianIsBind.setText(bindInfo.getEntity().getName());
+                                YinLInBindInfo=bindInfo;
+                                type="1";
+                                rlYinlian.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                    }
+                                });
+                            } else if (bindInfo.getType() == 2) {
+                                rbAilipay.setChecked(true);
+                                rbYinlian.setChecked(false);
+                                rbAilipay.setVisibility(View.VISIBLE);
+                                imgGo01.setVisibility(View.GONE);
+                                tvAliIsBind.setText(bindInfo.getEntity().getReceive_name());
+                                AlipayBindInfo=bindInfo;
+                                type="2";
+                                rlAlipay.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
 
+                                    }
+                                });
+                            }
+                        }
+
+                }
+            }
+        };
         etMoneySum.addTextChangedListener(new TextWatcher() {
 
             @Override
@@ -226,15 +270,11 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count,
                                           int after) {
-
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                // TODO Auto-generated method stub
-
             }
-
         });
         rbWXpay.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -251,7 +291,7 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
                 if (isChecked) {
                     rbAilipay.setChecked(false);
                     rbWXpay.setChecked(false);
-                    type = "1";
+                    type="1";
                 }
             }
         });
@@ -261,13 +301,174 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
                 if (isChecked) {
                     rbYinlian.setChecked(false);
                     rbWXpay.setChecked(false);
-                    type = "0";
+                    type = "2";
                 }
             }
         });
 
     }
 
+
+
+    @Override
+    public void initData() {
+        userId = (long) SPUtils.getParam(DrawMoneyActivity.this, Constants.LOGIN_INFO, Constants.SP_USERID, 0L);
+        tel = (String) SPUtils.getParam(DrawMoneyActivity.this, Constants.LOGIN_INFO, Constants.SP_TEL, "");
+        Intent intent=getIntent();
+        blanceMoney= Double.parseDouble(intent.getStringExtra("balance"));
+           }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        HttpMethods.getInstance().getWalletInfo(DrawMoneyActivity.this,new ProgressSubscriber<List<BindInfo>>(balanceSubscriberOnNextListener,this),tel);
+    }
+    public void checkAlipayYinLian(int bindPay) {
+        if (bindPay == 1) {
+            imgGo02.setVisibility(View.GONE);
+            rbYinlian.setVisibility(View.VISIBLE);
+            rbYinlian.setChecked(true);
+            rbAilipay.setChecked(false);
+            tvYinlianIsBind.setText("已绑定");
+            type = "1";
+        }
+        if (bindPay == 0) {
+            rbAilipay.setChecked(true);
+            rbYinlian.setChecked(false);
+            rbAilipay.setVisibility(View.VISIBLE);
+            imgGo01.setVisibility(View.GONE);
+            tvAliIsBind.setText("已绑定");
+            type = "2";
+        }
+    }
+
+    @Override
+    public void addActivity() {
+
+    }
+
+    class TimeCount extends CountDownTimer {
+
+        public TimeCount(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+            btnSms.setClickable(false);
+            btnSms.setText(millisUntilFinished / 1000 + "秒");
+            btnSms.setBackgroundColor(Color.GRAY);
+        }
+
+        @Override
+        public void onFinish() {
+            btnSms.setText("验证码");
+            Drawable rBlack;
+            if (Build.VERSION.SDK_INT >= 21) {
+                rBlack = getResources().getDrawable(R.drawable.button_background_login, getTheme());
+            } else {
+                rBlack = getResources().getDrawable(R.drawable.button_background_login);
+            }
+            btnSms.setBackgroundDrawable(rBlack);
+            btnSms.setClickable(true);
+        }
+    }
+
+    @OnClick({R.id.tv_setting,R.id.img_back,R.id.rl_wx, R.id.rl_alipay, R.id.rl_yinlian, R.id.btn_post, R.id.btn_sms,R.id.tv_tel})
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.tv_tel:
+                Intent intentTel=new Intent(Intent.ACTION_CALL, Uri.parse("tel:"+tvTel.getText()));
+                startActivity(intentTel);
+                break;
+            case R.id.tv_setting:
+                Intent unbindIntent=new Intent(DrawMoneyActivity.this,EditPayMethodActivity.class);
+                unbindIntent.putParcelableArrayListExtra("bindinfo",bindInfos);
+                startActivity(unbindIntent);
+                finish();
+                break;
+            case R.id.img_back:
+                finish();
+                break;
+            case R.id.btn_sms:
+                time.start();
+                HttpMethods.getInstance().sendCode(new BackgroundSubscriber<String>(SmsSubscriberOnNextListener,this),tel,"4");
+
+                break;
+            case R.id.rl_alipay:
+                Intent intentali=new Intent(DrawMoneyActivity.this, BindAliActivity.class);
+                startActivityForResult(intentali,0);
+                break;
+            case R.id.rl_yinlian:
+                Intent intent = new Intent(DrawMoneyActivity.this, BindYinlianActivity.class);
+                startActivityForResult(intent, 1);
+                break;
+            case R.id.rl_wx:
+                getWechatInfo();
+                break;
+            case R.id.btn_post:
+                //先判断支付宝和银行卡是否绑定过，再判断选中的是哪个，最后判断金额是否正确
+                if (type.equals("")) {
+                    showShortToast("请先绑定支付宝或银联卡！");
+                    return;
+                } else if (etMoneySum.getText().toString() == null || etMoneySum.getText().toString().equals("")) {
+                    showShortToast("请输入取现金额");
+                    return;
+                } else if (blanceMoney < Double.valueOf(etMoneySum.getText().toString())) {
+                    showShortToast("提现金额不能大于当前余额");
+                    return;
+                } else if (etSms.getText().toString().equals("")) {
+                    showShortToast("请输入验证码");
+                    return;
+                }  else if (Double.valueOf(etMoneySum.getText().toString()) < 30) {
+                    showShortToast("提现金额必须大于30");
+                    return;
+                }
+
+                PayInfo payInfo=new PayInfo();
+                payInfo.setType(3);
+                payInfo.setPay_user_id(userId);
+                payInfo.setMoney(Double.valueOf(etMoneySum.getText().toString()));
+                if (type.equals("1")){
+                    payInfo.setPay_type_id(YinLInBindInfo.getEntity().getId());
+                }else {
+                    payInfo.setPay_type_id(AlipayBindInfo.getEntity().getId());
+                }
+                Gson gson=new Gson();
+                List<PayInfo> list=new ArrayList();
+                list.add(payInfo);
+                String json = gson.toJson(list);
+                HttpMethods.getInstance().postMoney(DrawMoneyActivity.this,new ProgressSubscriber<String>(MoneySubscriberOnNextListener,this),tel,etSms.getText().toString(),json);
+                break;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        time.cancel();
+        super.onDestroy();
+    }
+
+
+
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 0) {
+            if (resultCode == RESULT_OK) {
+                // ALI
+                checkAlipayYinLian(0);
+            }
+        } else {
+            if (resultCode == RESULT_OK) {
+                //yinlian
+                checkAlipayYinLian(1);
+            }
+        }
+
+
+    }
     private void showDialog() {
         new SweetAlertDialog(DrawMoneyActivity.this,SweetAlertDialog.NORMAL_TYPE)
                 .setContentText("尊敬的用户，您的提现申请已经提交，工作人员将在24小时内为您处理，请您耐心等待")
@@ -304,7 +505,7 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
             if (entry.getKey().equals("openid")) {
                 openid= (String) entry.getValue();
             }else if (entry.getKey().equals("nickname")) {
-                 nickname= (String) entry.getValue();
+                nickname= (String) entry.getValue();
             } else if (entry.getKey().equals("headimgurl")) {
                 imgurl= String.valueOf(entry.getValue());
             } else if (entry.getKey().equals("sex")) {
@@ -318,9 +519,7 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
                 unionid=(String)entry.getValue().toString();
             }
         }
-//        ProgressDialog progressDialog=new ProgressDialog(DrawMoneyActivity.this);
-//        progressDialog.setMessage("加载中...");
-        HttpMethods.getInstance().bindWX(new NoProgressSubscriber<String>(weixinSubscriberOnNextListener,this,progressDialog), String.valueOf(loginid),openid,nickname,sex,province,city,imgurl,unionid);
+        HttpMethods.getInstance().bindWX(new NoProgressSubscriber<String>(weixinSubscriberOnNextListener,this,progressDialog),tel,openid,nickname,sex,province,city,imgurl,unionid);
         progressDialog.dismiss();
     }
 
@@ -332,280 +531,5 @@ public class DrawMoneyActivity extends BaseActivity implements PlatformActionLis
     @Override
     public void onCancel(Platform platform, int i) {
 
-    }
-
-    @Override
-    public void initData() {
-        Intent balanceIntent = getIntent();
-        balance = (Balance) balanceIntent.getSerializableExtra("balance");
-        /**
-         * id : 1
-         * login_id : 4
-         * name : 谢军
-         * money : 50.0
-         * zhifubao : 0
-         * yinhang : 0
-         * kahao : 0
-         * pay_password : 0
-         */
-        blanceMoney = balance.getData().getT_user_money().getMoney();
-         if (balance.getWeixin().equals("0")){
-             rlWx.setVisibility(View.GONE);
-         }
-        if (!balance.getData().getT_user_money().getYinhang().equals("0")) {
-            imgGo02.setVisibility(View.GONE);
-            rbYinlian.setVisibility(View.VISIBLE);
-            rbYinlian.setChecked(true);
-            tvYinlianIsBind.setText(balance.getData().getT_user_money().getYinhang());
-            type = "1";
-        }
-        if (!balance.getData().getT_user_money().getZhifubao().equals("0")) {
-            rbAilipay.setChecked(true);
-            rbAilipay.setVisibility(View.VISIBLE);
-            imgGo01.setVisibility(View.GONE);
-            tvAliIsBind.setText(balance.getData().getT_user_money().getName());
-            type = "0";
-        }
-        if (!balance.getData().getT_user_money().getWeixin().equals("0")) {
-            rbWXpay.setChecked(true);
-            rbWXpay.setVisibility(View.VISIBLE);
-            imgGo03.setVisibility(View.GONE);
-            tvWxIsBind.setText(balance.getData().getT_user_money().getNickname());
-            type = "2";
-        }
-        if (balance.getData().getT_user_money().getWeixin().equals("1") ) {
-            rbWXpay.setChecked(true);
-            rbYinlian.setChecked(false);
-            rbAilipay.setChecked(false);
-            type = "2";
-        }else if (balance.getData().getT_user_money().getZhifubao().equals("1")){
-            rbWXpay.setChecked(false);
-            rbYinlian.setChecked(false);
-            rbAilipay.setChecked(true);
-            type = "0";
-        }else if(balance.getData().getT_user_money().getYinhang().equals("1")){
-            rbWXpay.setChecked(false);
-            rbYinlian.setChecked(true);
-            rbAilipay.setChecked(false);
-            type = "1";
-        }
-        loginid = (int) SPUtils.getParam(DrawMoneyActivity.this, Constants.LOGIN_INFO, Constants.SP_USERID, 0);
-    }
-
-    public void checkAlipayYinLian(int bindPay) {
-        if (bindPay == 1) {
-            imgGo02.setVisibility(View.GONE);
-            rbYinlian.setVisibility(View.VISIBLE);
-            rbYinlian.setChecked(true);
-            rbAilipay.setChecked(false);
-            tvYinlianIsBind.setText("已绑定");
-            type = "1";
-
-        }
-        if (bindPay == 0) {
-            rbAilipay.setChecked(true);
-            rbYinlian.setChecked(false);
-            rbAilipay.setVisibility(View.VISIBLE);
-            imgGo01.setVisibility(View.GONE);
-            tvAliIsBind.setText("已绑定");
-            type = "0";
-        }
-//          if (!balance.getData().getT_user_money().getYinhang().equals("0") && !balance.getData().getT_user_money().getZhifubao().equals("0")) {
-//              rbAilipay.setChecked(true);
-//              rbYinlian.setChecked(false);
-//              type = "0";
-//          }
-    }
-
-    @Override
-    public void addActivity() {
-
-    }
-
-    class TimeCount extends CountDownTimer {
-
-        public TimeCount(long millisInFuture, long countDownInterval) {
-            super(millisInFuture, countDownInterval);
-        }
-
-        @Override
-        public void onTick(long millisUntilFinished) {
-            btnSms.setClickable(false);
-            btnSms.setText(millisUntilFinished / 1000 + "秒");
-            btnSms.setBackgroundColor(Color.GRAY);
-        }
-
-        @Override
-        public void onFinish() {
-            btnSms.setText("验证码");
-            Drawable rBlack;
-            if (Build.VERSION.SDK_INT >= 21) {
-                rBlack = getResources().getDrawable(R.drawable.button_background_login, getTheme());
-            } else {
-                rBlack = getResources().getDrawable(R.drawable.button_background_login);
-            }
-            btnSms.setBackgroundDrawable(rBlack);
-            btnSms.setClickable(true);
-        }
-    }
-
-    @OnClick({R.id.img_back,R.id.rl_wx, R.id.rl_alipay, R.id.rl_yinlian, R.id.btn_post, R.id.btn_sms,R.id.tv_tel})
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.tv_tel:
-                Intent intentTel=new Intent(Intent.ACTION_CALL, Uri.parse("tel:"+tvTel.getText()));
-                startActivity(intentTel);
-                break;
-            case R.id.img_back:
-                finish();
-                break;
-            case R.id.btn_sms:
-//                test();
-                time.start();
-                String tel = (String) SPUtils.getParam(DrawMoneyActivity.this, Constants.LOGIN_INFO, Constants.SP_TEL, "");
-                HttpMethods.getInstance().checkSms(new ProgressSubscriber<String>(SmsSubscriberOnNextListener,this),tel);
-//                 GetSMS getSMS = new GetSMS(tel);
-//                getSMS.execute();
-                break;
-            case R.id.rl_alipay:
-                Intent intentali=new Intent(DrawMoneyActivity.this, BindAliActivity.class);
-                startActivityForResult(intentali,0);
-                break;
-            case R.id.rl_yinlian:
-                Intent intent = new Intent(DrawMoneyActivity.this, BindYinlianActivity.class);
-                startActivityForResult(intent, 1);
-                break;
-            case R.id.rl_wx:
-                getWechatInfo();
-                break;
-            case R.id.btn_post:
-                //先判断支付宝和银行卡是否绑定过，再判断选中的是哪个，最后判断金额是否正确
-                if (type.equals("")) {
-                    showShortToast("请先绑定支付宝或银联卡！");
-                    return;
-                } else if (etMoneySum.getText().toString() == null || etMoneySum.getText().toString().equals("")) {
-                    showShortToast("请输入取现金额");
-                    return;
-                } else if (blanceMoney < Double.valueOf(etMoneySum.getText().toString())) {
-                    showShortToast("提现金额不能大于当前余额");
-                    return;
-                } else if (etSms.getText().toString().equals("")) {
-                    showShortToast("请输入验证码");
-                    return;
-                }  else if (Double.valueOf(etMoneySum.getText().toString()) < 30) {
-                    showShortToast("提现金额必须大于30");
-                    return;
-                }
-                 HttpMethods.getInstance().postMoney(new ProgressSubscriber<String>(MoneySubscriberOnNextListener,this),String.valueOf(loginid),etSms.getText().toString().trim(),  type,etMoneySum.getText().toString());
-                break;
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        time.cancel();
-        super.onDestroy();
-    }
-
-
-
-
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 0) {
-            if (resultCode == RESULT_OK) {
-                // ALI
-                checkAlipayYinLian(0);
-            }
-        } else {
-            if (resultCode == RESULT_OK) {
-                //yinlian
-                checkAlipayYinLian(1);
-            }
-        }
-
-
-    }
-
-//    public void UserRegisterPhone() {
-//        String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-//        OkHttpUtils
-//                .get()
-//                .url(Constants.POST_DRAW_MONEY)
-//                .addParams("only", only)
-//                .addParams("status", type)
-//                .addParams("type", type)
-//                .addParams("login_id", id)
-//                .addParams("money", money)
-//                .build()
-//                .connTimeOut(30000)
-//                .readTimeOut(20000)
-//                .writeTimeOut(20000)
-//                .execute(new BaseCallback() {
-//                    @Override
-//                    public void onError(Call call, Exception e, int id) {
-//                        Message message = new Message();
-//                        message.obj = e.getMessage();
-//                        message.what = MSG_USER_FAIL;
-//                        mHandler.sendMessage(message);
-//                    }
-//
-//
-//                    @Override
-//                    public void onResponse(BaseBean response, int id) {
-//                        if (response.getCode().equals("200")) {
-//                            Message message = new Message();
-//                            message.obj = response.getMessage();
-//                            message.what = MSG_USER_SUCCESS;
-//                            mHandler.sendMessage(message);
-//                        } else {
-//                            Message message = new Message();
-//                            message.obj = response.getMessage();
-//                            message.what = MSG_USER_FAIL;
-//                            mHandler.sendMessage(message);
-//                        }
-//
-//                    }
-//
-//
-//                });
-//    }
-    /**
-    *测试
-    */
-    public void test () {
-        OkHttpUtils
-                .get()
-                .url("http://api.cassianetworks.com/gap/nodes/")
-                .addParams("chip", "1")
-                .addParams("event", "1")
-                .addParams("mac", "CC:1B:E0:E0:18:FC")
-                .addParams("access_token", "69a4ed756bfb8b0e50fc6d9a2ea892ae6ce10e3e223105d597f41a0d185163ecc2b6dad685cd2cc8a67ed2678b78836e4798a3cdba0e031ed56c7d998d10b5d3")
-                .build()
-                .connTimeOut(300000)
-                .readTimeOut(200000)
-                .writeTimeOut(200000)
-                .execute(new Callback() {
-                    @Override
-                    public Object parseNetworkResponse(Response response, int id) throws Exception {
-                        response.toString();
-                        String string = response.body().string();
-                        ResponseBody body = response.body();
-
-                        return null;
-                    }
-
-                    @Override
-                    public void onError(Call call, Exception e, int id) {
-                        String message = e.getMessage();
-                    }
-
-                    @Override
-                    public void onResponse(Object response, int id) {
-                        String message = response.toString();
-                    }
-                });
     }
 }

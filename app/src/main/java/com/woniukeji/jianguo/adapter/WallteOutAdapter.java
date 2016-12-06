@@ -14,6 +14,8 @@ import android.widget.TextView;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.entity.DrawMoney;
 import com.woniukeji.jianguo.activity.partjob.JobDetailActivity;
+import com.woniukeji.jianguo.entity.WageLog;
+import com.woniukeji.jianguo.utils.DateUtils;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ import butterknife.BindView;
 
 public class WallteOutAdapter extends RecyclerView.Adapter<WallteOutAdapter.ViewHolder> {
 
-    private final List<DrawMoney.DataEntity.ListTUserMoneyoutEntity> mValues;
+    private final List<WageLog> mValues;
     private final Context mContext;
     public static final int NORMAL = 1;
     public static final int IS_FOOTER = 2;
@@ -32,7 +34,7 @@ public class WallteOutAdapter extends RecyclerView.Adapter<WallteOutAdapter.View
     private AnimationDrawable mAnimationDrawable;
     private boolean isFooterChange = false;
 
-    public WallteOutAdapter(List<DrawMoney.DataEntity.ListTUserMoneyoutEntity> items, Context context) {
+    public WallteOutAdapter(List<WageLog> items, Context context) {
         mValues = items;
         mContext = context;
     }
@@ -87,24 +89,24 @@ public class WallteOutAdapter extends RecyclerView.Adapter<WallteOutAdapter.View
                 holder.itemView.setVisibility(View.VISIBLE);
             }
         } else {
-            final DrawMoney.DataEntity.ListTUserMoneyoutEntity job = mValues.get(position);
+            final WageLog job = mValues.get(position);
 
 
             //等待数据设置
 
-            if (job.getStatus()==1){
-                 if (job.getType()==0){
+            if (job.getStatus()==2){
+                 if (job.getType()==2){
                      holder.tvStatus.setText("已转出到支付宝");
                  }else if(job.getType()==1){
                      holder.tvStatus.setText("已转出到银行卡");
-                 }else if(job.getType()==2){
-                     holder.tvStatus.setText(job.getRemarks());
+                 }else {
+                     holder.tvStatus.setText(job.getNote());
                  }
             }else {
                 holder.tvStatus.setText("结算中");
             }
 
-            holder.tvOutDate.setText(job.getTime());
+            holder.tvOutDate.setText(DateUtils.getTime(job.getCreateTime(),"yyyy-MM-dd"));
             holder.tvOutWages.setText("-"+job.getMoney());
 //
 //            holder.businessName.setText(job.getName());

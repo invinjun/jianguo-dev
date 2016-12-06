@@ -49,7 +49,7 @@ public class SignAdapter extends RecyclerView.Adapter<SignAdapter.ViewHolder> {
 
 
     public interface RecyCallBack {
-        void RecyOnClick(int login_id, int admit, int position);
+        void RecyOnClick(long id, int admit, int position);
     }
 
     public void setFooterChange(boolean isChange) {
@@ -145,9 +145,9 @@ public class SignAdapter extends RecyclerView.Adapter<SignAdapter.ViewHolder> {
             }else if(jobEntity.getStatus()==1){
                 holder.btnConfirmActn.setVisibility(View.GONE);
                 holder.imgJobStatus.setImageDrawable(mContext.getResources().getDrawable(R.mipmap.icon_dailuqu));
-                holder.btnCancelActn.setVisibility(View.GONE);
-                holder.imgFinishStatus.setVisibility(View.VISIBLE);
-                holder.imgFinishStatus.setBackgroundResource(R.mipmap.icon_quxiao);
+                holder.btnCancelActn.setVisibility(View.VISIBLE);
+//                holder.imgFinishStatus.setVisibility(View.VISIBLE);
+//                holder.imgFinishStatus.setBackgroundResource(R.mipmap.icon_dailuqu);
             }else if(jobEntity.getStatus()==2){
                 holder.btnConfirmActn.setVisibility(View.GONE);
                 holder.imgJobStatus.setImageDrawable(mContext.getResources().getDrawable(R.mipmap.icon_yiluqu));
@@ -155,10 +155,8 @@ public class SignAdapter extends RecyclerView.Adapter<SignAdapter.ViewHolder> {
                 holder.imgFinishStatus.setVisibility(View.VISIBLE);
                 holder.imgFinishStatus.setBackgroundResource(R.mipmap.icon_shangjia);
             }else if(jobEntity.getStatus()==3){
-                holder.btnCancelActn.setText("取消参加");
-                holder.btnConfirmActn.setText("确定参加");
-                holder.btnConfirmActn.setVisibility(View.VISIBLE);
-                holder.btnCancelActn.setVisibility(View.VISIBLE);
+                holder.btnConfirmActn.setVisibility(View.GONE);
+                holder.btnCancelActn.setVisibility(View.GONE);
                 holder.imgFinishStatus.setVisibility(View.GONE);
                 holder.imgJobStatus.setImageDrawable(mContext.getResources().getDrawable(R.mipmap.icon_yiluqu));
                 holder.btnConfirmActn.setBackgroundResource(R.drawable.button_sign_background_red);
@@ -169,10 +167,9 @@ public class SignAdapter extends RecyclerView.Adapter<SignAdapter.ViewHolder> {
                 holder.imgFinishStatus.setVisibility(View.VISIBLE);
                 holder.imgFinishStatus.setBackgroundResource(R.mipmap.icon_quxiao);
             }else if(jobEntity.getStatus()==5){
-                holder.btnCancelActn.setText("取消参加");
                 holder.btnConfirmActn.setVisibility(View.GONE);
-                holder.btnCancelActn.setVisibility(View.VISIBLE);
-                holder.imgFinishStatus.setVisibility(View.GONE);
+                holder.btnCancelActn.setVisibility(View.GONE);
+                holder.imgFinishStatus.setVisibility(View.VISIBLE);
                 holder.imgJobStatus.setImageDrawable(mContext.getResources().getDrawable(R.mipmap.icon_yiluqu));
             }
             Glide.with(mContext).load(jobEntity.getJob_image())
@@ -200,78 +197,32 @@ public class SignAdapter extends RecyclerView.Adapter<SignAdapter.ViewHolder> {
                     mContext.startActivity(intent);
                 }
             });
-//            holder.btnCancelActn.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    int type =0;
-//                    if (jobEntity.getStatus().equals("0")){
-//                        type=1;
-//                        final int finalType1 = type;
-//                        new SweetAlertDialog(mContext,SweetAlertDialog.WARNING_TYPE)
-//                                .setTitleText("确定取消报名吗？")
-//                                .setConfirmText("确定")
-//                                .setCancelText("取消")
-//                                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
-//                                    @Override
-//                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
-//                                        mCallBack.RecyOnClick(jobEntity.getId(), finalType1,position);
-//                                        sweetAlertDialog.dismissWithAnimation();
-//                                        return;
-//                                    }
-//                                }).show();
-//                    }
-//                    else if(jobEntity.getUser_status().equals("3")){
-//                        type=4;
-//                        final int finalType1 = type;
-//                        new SweetAlertDialog(mContext,SweetAlertDialog.WARNING_TYPE)
-//                                .setTitleText("确定取消报名吗？")
-//                                .setConfirmText("确定")
-//                                .setCancelText("取消")
-//                                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
-//                                    @Override
-//                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
-//                                        mCallBack.RecyOnClick(jobEntity.getId(), finalType1,position);
-//                                        sweetAlertDialog.dismissWithAnimation();
-//                                        return;
-//                                    }
-//                                }).show();
-//                    }
-//                    else if(jobEntity.getUser_status().equals("5")){
-//                        type=6;
-//                        final int finalType1 = type;
-//                        new SweetAlertDialog(mContext,SweetAlertDialog.WARNING_TYPE)
-//                                .setTitleText("确定取消报名吗？")
-//                                .setConfirmText("确定")
-//                                .setCancelText("取消")
-//                                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
-//                                    @Override
-//                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
-//                                        mCallBack.RecyOnClick(jobEntity.getId(), finalType1,position);
-//                                        sweetAlertDialog.dismissWithAnimation();
-//                                        return;
-//                                    }
-//                                }).show();
-//                    }
-//                    else if(jobEntity.getUser_status().equals("9")){
-//                        type=10;
-//                        mCallBack.RecyOnClick(jobEntity.getId(),type,position);
-//                    }
-//                    else if(jobEntity.getUser_status().equals("11")){
-//                        type=12;
-//                        mCallBack.RecyOnClick(jobEntity.getId(),type,position);
-//                    }
-//                    else {
-//                        return;
-//                    }
-//
-//                }
-//            });
-//            holder.btnConfirmActn.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
+            holder.btnCancelActn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (jobEntity.getStatus()==1){
+                        new SweetAlertDialog(mContext,SweetAlertDialog.WARNING_TYPE)
+                                .setTitleText("确定取消报名吗？")
+                                .setConfirmText("确定")
+                                .setCancelText("取消")
+                                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                                    @Override
+                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
+                                        mCallBack.RecyOnClick(jobEntity.getId(), 2,position);
+                                        sweetAlertDialog.dismissWithAnimation();
+                                        return;
+                                    }
+                                }).show();
+                    }
+
+                }
+            });
+            holder.btnConfirmActn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
 //                    mCallBack.RecyOnClick(jobEntity.getId(),5,position);
-//                }
-//            });
+                }
+            });
 
 
         }

@@ -191,7 +191,6 @@ public class PasswordLoginFragment extends BaseFragment {
         SPUtils.setParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_RESUMM, user.getResume());
         SPUtils.setParam(getActivity(), Constants.USER_INFO, Constants.SP_NICK, user.getNickName()!= null ? user.getNickName() : "");
         SPUtils.setParam(getActivity(), Constants.USER_INFO, Constants.SP_IMG, user.getHead_img_url() != null ? user.getHead_img_url() : "");
-
 //
 
 
@@ -215,7 +214,6 @@ public class PasswordLoginFragment extends BaseFragment {
 //        SPUtils.setParam(getActivity(), Constants.USER_INFO, Constants.SP_INTEGRAL, user.getT_user_info().getIntegral());
 //        SPUtils.setParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_RESUMM, user.getT_user_login().getResume());
 //        SPUtils.setParam(getActivity(), Constants.USER_INFO, Constants.USER_SEX, user.getT_user_info().getUser_sex());
-
 
 // 暂时关闭果聊功能
 //        final ChatManager chatManager = ChatManager.getInstance();

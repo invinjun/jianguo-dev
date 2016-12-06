@@ -22,8 +22,12 @@ import com.woniukeji.jianguo.adapter.SignAdapter;
 import com.woniukeji.jianguo.base.BaseFragment;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.BaseBean;
+import com.woniukeji.jianguo.entity.HttpResult;
 import com.woniukeji.jianguo.entity.Jobs;
 import com.woniukeji.jianguo.eventbus.SignEvent;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriber;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.utils.SPUtils;
 import com.woniukeji.jianguo.widget.FixedRecyclerView;
@@ -77,14 +81,10 @@ public class SignFragment extends BaseFragment implements SignAdapter.RecyCallBa
 
 
     @Override
-    public void RecyOnClick(int jobid, int offer, int position) {
-        if (offer==11){
-            //去评价界面
-        }
-        PostTask admitTask=new PostTask(String.valueOf(loginId),String.valueOf(jobid),String.valueOf(offer));
-        admitTask.execute();
+    public void RecyOnClick(long jobid, int type, int position) {
 
     }
+
 
 
     private class Myhandler extends Handler {
@@ -193,6 +193,7 @@ public class SignFragment extends BaseFragment implements SignAdapter.RecyCallBa
         loginId = (int) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_USERID, 0);
         GetTask getTask=new GetTask(String.valueOf(loginId),String.valueOf(type),"0");
         getTask.execute();
+
 
     }
     public void onEvent(SignEvent signEvent){

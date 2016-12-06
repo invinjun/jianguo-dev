@@ -35,7 +35,7 @@
         android:maxLines="1"
         android:ellipsize="end"
         android:text="凯宾斯基酒店宴会服务员,监制管理测试字数"
-        android:drawableRight="@mipmap/cq"
+
         android:drawablePadding="5dp"
         />
     <RelativeLayout

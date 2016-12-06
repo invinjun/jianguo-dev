@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.telecom.TelecomManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,10 +14,14 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.activity.BaseActivity;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.BaseBean;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriber;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
 import com.woniukeji.jianguo.utils.ActivityManager;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.utils.SPUtils;
@@ -42,7 +47,8 @@ public class FeedBackActivity extends BaseActivity {
     private int MSG_POST_SUCCESS = 0;
     private int MSG_POST_FAIL = 1;
     private Handler mHandler = new Myhandler(this);
-    private int loginId;
+    private String tel;
+    private SubscriberOnNextListener<String> stringSubscriberOnNextListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,12 +69,18 @@ public class FeedBackActivity extends BaseActivity {
 
     @Override
     public void initListeners() {
-
+        stringSubscriberOnNextListener=new SubscriberOnNextListener<String>() {
+            @Override
+            public void onNext(String s) {
+                TastyToast.makeText(FeedBackActivity.this,"反馈提交成功，我们会及时处理您的反馈的！",TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+                finish();
+            }
+        };
     }
 
     @Override
     public void initData() {
-        loginId = (int) SPUtils.getParam(FeedBackActivity.this, Constants.LOGIN_INFO, Constants.SP_USERID, 0);
+        tel = (String) SPUtils.getParam(FeedBackActivity.this, Constants.LOGIN_INFO, Constants.SP_TEL, "");
     }
 
     @Override
@@ -92,9 +104,7 @@ public class FeedBackActivity extends BaseActivity {
                     showShortToast("请输入手机号");
                     return;
                 }
-                postOpinion(String.valueOf(loginId),etContent.getText().toString());
-                showShortToast("感谢您的反馈！我们将及时处理");
-                finish();
+                HttpMethods.getInstance().postFeedback(FeedBackActivity.this,new ProgressSubscriber<String>(stringSubscriberOnNextListener,FeedBackActivity.this),tel,etContent.getText().toString());
                 break;
         }
     }
@@ -136,54 +146,5 @@ public class FeedBackActivity extends BaseActivity {
     }
 
 
-        /**
-         * postInfo
-         */
-        public void postOpinion(String tel, String text) {
-            String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-            OkHttpUtils
-                    .get()
-                    .url(Constants.POST_OPINION)
-                    .addParams("only", only)
-                    .addParams("tel", tel)
-                    .addParams("text", text)
-                    .build()
-                    .connTimeOut(6000)
-                    .readTimeOut(2000)
-                    .writeTimeOut(2000)
-                    .execute(new Callback<BaseBean>() {
-                        @Override
-                        public BaseBean parseNetworkResponse(Response response ,int id) throws Exception {
-                            String string = response.body().string();
-                            BaseBean baseBean = new Gson().fromJson(string, new TypeToken<BaseBean>() {
-                            }.getType());
-                            return baseBean;
-                        }
 
-                        @Override
-                        public void onError(Call call, Exception e,int id) {
-                            Message message = new Message();
-                            message.obj = e.toString();
-                            message.what = MSG_POST_FAIL;
-                            mHandler.sendMessage(message);
-                        }
-
-                        @Override
-                        public void onResponse(BaseBean baseBean,int id) {
-                            if (baseBean.getCode().equals("200")) {
-//                                SPUtils.setParam(AuthActivity.this, Constants.LOGIN_INFO, Constants.SP_TYPE, "0");
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_POST_SUCCESS;
-                                mHandler.sendMessage(message);
-                            } else {
-                                Message message = new Message();
-                                message.obj = baseBean.getMessage();
-                                message.what = MSG_POST_FAIL;
-                                mHandler.sendMessage(message);
-                            }
-                        }
-
-                    });
-        }
 }

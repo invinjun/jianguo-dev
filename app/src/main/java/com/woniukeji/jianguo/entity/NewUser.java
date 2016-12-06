@@ -19,7 +19,7 @@ public class NewUser {
         private int createTime;
         private String tel;
         private int auth_status;//认证状态
-        private String id;
+        private long id;
         private int type;
         private int status;
         private String token;
@@ -80,11 +80,11 @@ public class NewUser {
             this.auth_status = auth_status;
         }
 
-        public String getId() {
+        public long getId() {
             return id;
         }
 
-        public void setId(String id) {
+        public void setId(long id) {
             this.id = id;
         }
 

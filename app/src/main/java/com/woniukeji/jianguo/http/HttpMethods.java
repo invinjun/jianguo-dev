@@ -1,11 +1,14 @@
 package com.woniukeji.jianguo.http;
 
 
+import android.content.Context;
 import android.widget.VideoView;
 
+import com.woniukeji.jianguo.activity.mine.SchoolActivity;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.Balance;
 import com.woniukeji.jianguo.entity.Banner;
+import com.woniukeji.jianguo.entity.BindInfo;
 import com.woniukeji.jianguo.entity.CityBannerEntity;
 import com.woniukeji.jianguo.entity.CityCategory;
 import com.woniukeji.jianguo.entity.CityCategoryBase;
@@ -17,13 +20,17 @@ import com.woniukeji.jianguo.entity.JoinJob;
 import com.woniukeji.jianguo.entity.ListTJobEntity;
 import com.woniukeji.jianguo.entity.NewUser;
 import com.woniukeji.jianguo.entity.PushMessage;
+import com.woniukeji.jianguo.entity.RealName;
 import com.woniukeji.jianguo.entity.Resume;
 import com.woniukeji.jianguo.entity.RxCityCategory;
 import com.woniukeji.jianguo.entity.RxJobDetails;
 import com.woniukeji.jianguo.entity.School;
 import com.woniukeji.jianguo.entity.User;
+import com.woniukeji.jianguo.entity.Version;
+import com.woniukeji.jianguo.entity.WageLog;
 import com.woniukeji.jianguo.utils.DateUtils;
 import com.woniukeji.jianguo.utils.MD5Util;
+import com.woniukeji.jianguo.utils.SPUtils;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +100,8 @@ public class HttpMethods {
             return httpResult.getData();
         }
     }
+
+
     /**
      * 用户注册
      * @param subscriber 由调用者传过来的观察者对象
@@ -213,30 +222,8 @@ public class HttpMethods {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
     }
-    /**
-    *提交实名信息
-    */
-    public void postReal(Subscriber<String> subscriber, String loginid,String front,String behind,String name,String id,String sex){
-        String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-        methodInterface.postRealName(only,loginid,front,behind,name,id,sex)
-                .map(new HttpResultFunc())
-                .subscribeOn(Schedulers.io())
-                .unsubscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-    }
-    /**
-    *获取果聊用户资料
-    */
-    public void getTalkUser(Subscriber<List<LCChatKitUser>> lcChatKitUserSubscriber, String loginid){
-        String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-        methodInterface.getTalkUser(only,loginid)
-                .map(new HttpResultFunc<List<LCChatKitUser>>())
-                .subscribeOn(Schedulers.io())
-                .unsubscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(lcChatKitUserSubscriber);
-    }
+
+
     /**
      *提交收藏兼职请求
      */
@@ -249,18 +236,7 @@ public class HttpMethods {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
     }
-    /**
-     *提交提现申请
-     */
-    public void postMoney(Subscriber<String> subscriber, String loginid,String sms,String type,String money){
-        String only = DateUtils.getDateTimeToOnly(System.currentTimeMillis());
-        methodInterface.postMoney(only,loginid,sms,type,money)
-                .map(new HttpResultFunc())
-                .subscribeOn(Schedulers.io())
-                .unsubscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-    }
+
     /**
     *手机号存在发送验证码（提现、忘记密码，修改密码）
     */
@@ -352,6 +328,7 @@ public class HttpMethods {
 */
     public void sendCode(Subscriber<String> subscriber,  String tel, String type) {
         String appid=MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
         Observable<HttpResult> cityCategory = methodInterface.sendCode(appid,tel,type);
         cityCategory.map(new HttpResultFunc())
                 .subscribeOn(Schedulers.io())
@@ -367,7 +344,8 @@ public class HttpMethods {
      *created at 2016/10/21 15:27
      */
     public void passLogin(Subscriber<NewUser> subscriber, String tel, String password) {
-        String appid= MD5Util.MD5(tel);
+        String appid=MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
         Observable<HttpResult<NewUser>> cityCategory = methodInterface.passwdLogin(appid,tel,password,"1");
         cityCategory.map(new HttpResultFunc<NewUser>())
                 .subscribeOn(Schedulers.io())
@@ -382,7 +360,8 @@ public class HttpMethods {
      *created at 2016/10/21 15:27
      */
     public void codeLogin(Subscriber<NewUser> subscriber, String tel, String code) {
-        String appid= MD5Util.MD5(tel);
+        String appid=MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
         Observable<HttpResult<NewUser>> cityCategory = methodInterface.smsLogin(appid,tel,code,"1");
         cityCategory.map(new HttpResultFunc<NewUser>())
                 .subscribeOn(Schedulers.io())
@@ -397,7 +376,8 @@ public class HttpMethods {
      *created at 2016/10/21 15:27
      */
     public void autoLogin(Subscriber<NewUser> subscriber, String tel,String token) {
-        String appid= MD5Util.MD5(tel);
+        String appid=MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
         Observable<HttpResult<NewUser>> cityCategory = methodInterface.autoLogin(appid,token,"1");
         cityCategory.map(new HttpResultFunc<NewUser>())
                 .subscribeOn(Schedulers.io())
@@ -414,7 +394,8 @@ public class HttpMethods {
      *created at 2016/11/14 15:08
      */
     public void passReset(Subscriber<String> subscriber, String tel,String code, String passwd) {
-        String appid= MD5Util.MD5(tel);
+        String appid=MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
         Observable<HttpResult> cityCategory = methodInterface.passReset(appid,tel,code,passwd);
         cityCategory.map(new HttpResultFunc())
                 .subscribeOn(Schedulers.io())
@@ -439,9 +420,12 @@ public class HttpMethods {
     *@author invinjun
     *created at 2016/11/14 16:39
     */
-    public void userInfo(Subscriber<Resume> subscriber, String tel, String sign, String timestamp) {
+    public void userInfo(Context context,Subscriber<Resume> subscriber, String tel) {
+        long timestamp = System.currentTimeMillis();
         String appid= MD5Util.MD5(tel);
-        Observable<HttpResult<Resume>> cityCategory = methodInterface.userInfo(appid,sign,timestamp);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<Resume>> cityCategory = methodInterface.userInfo(appid,sign, String.valueOf(timestamp));
         cityCategory.map(new HttpResultFunc<Resume>())
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
@@ -452,15 +436,27 @@ public class HttpMethods {
     /**
      *提交用户资料
      */
-    public void postResum(Subscriber<String> subscriber, String tel, String sign, String timestamp, String name, String nickname, int school, String height,
+    public void postResum(Context context,Subscriber<String> subscriber, String tel,  String name, String nickname, int school, String height,
                           String student, String name_image, String intoschool_date, String birth_date, String sex, String email, int qq, String intrduce){
+        long timestamp = System.currentTimeMillis();
         String appid= MD5Util.MD5(tel);
-        methodInterface.postResume(appid,sign,timestamp,name,nickname,school,height,student,name_image,intoschool_date,birth_date,sex,email,qq,intrduce)
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        methodInterface.postResume(appid,sign, String.valueOf(timestamp),name,nickname,school,height,student,name_image,intoschool_date,birth_date,sex,email,qq,intrduce)
                 .map(new HttpResultFunc())
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
+    }
+    public void getJobListOfType(Subscriber<List<JobListBean>> subscriber, String cityId, String areaId, String jobType, String order, String pageNum,int firstPageType) {
+        Observable<HttpResult<List<JobListBean>>> cityCategory = methodInterface.jobListOfType(cityId,areaId,jobType,order,pageNum,firstPageType);
+        cityCategory.map(new HttpResultFunc<List<JobListBean>>())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+
     }
     public void getJobList(Subscriber<List<JobListBean>> subscriber, String cityId, String areaId, String jobType, String order, String pageNum) {
         Observable<HttpResult<List<JobListBean>>> cityCategory = methodInterface.jobList(cityId,areaId,jobType,order,pageNum);
@@ -479,9 +475,12 @@ public class HttpMethods {
      *@author invinjun
      *created at 2016/11/14 16:39
      */
-    public void getSchool(Subscriber<List<School>> subscriber, String tel, String sign, String timestamp, String cityId) {
+    public void getSchool(Context context,Subscriber<List<School>> subscriber, String tel,String cityId) {
+        long timestamp = System.currentTimeMillis();
         String appid= MD5Util.MD5(tel);
-        Observable<HttpResult<List<School>>> cityCategory = methodInterface.school(appid,sign,timestamp,cityId);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<List<School>>> cityCategory = methodInterface.school(appid,sign, String.valueOf(timestamp),cityId);
         cityCategory.map(new HttpResultFunc<List<School>>())
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
@@ -496,9 +495,12 @@ public class HttpMethods {
      *@author invinjun
      *created at 2016/7/26 16:46
      */
-    public void MpostSign(Subscriber<String> subscriber, String tel, String sign, String timestamp, String jobid){
+    public void MpostSign(Context context,Subscriber<String> subscriber, String tel,  String jobid){
+        long timestamp = System.currentTimeMillis();
         String appid= MD5Util.MD5(tel);
-        Observable<HttpResult> cityCategory = methodInterface.join(appid,sign,timestamp,jobid);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult> cityCategory = methodInterface.join(appid,sign, String.valueOf(timestamp),jobid);
         cityCategory.map(new HttpResultFunc())
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
@@ -523,9 +525,12 @@ public class HttpMethods {
      *@author invinjun
      *created at 2016/7/26 16:46
      */
-    public void getJoinJob(Subscriber<List<JoinJob>> subscriber, String tel, String sign, String timestamp, int pageNum){
+    public void getJoinJob(Context context,Subscriber<List<JoinJob>> subscriber, String tel, int pageNum){
+        long timestamp = System.currentTimeMillis();
         String appid= MD5Util.MD5(tel);
-        Observable<HttpResult<List<JoinJob>>> cityCategory = methodInterface.getSignJob(appid,sign,timestamp,pageNum);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<List<JoinJob>>> cityCategory = methodInterface.getSignJob(appid,sign, String.valueOf(timestamp),pageNum);
         cityCategory.map(new HttpResultFunc<List<JoinJob>>())
                 .subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
@@ -536,12 +541,191 @@ public class HttpMethods {
     /**
      *取消报名
      */
-    public void cancelJoin(Subscriber<HttpResult> subscriber, String tel, String sign, String timestamp, String jobid,int status){
+    public void cancelJoin(Context context,Subscriber<HttpResult> subscriber, String tel,  String jobid,int status){
+        long timestamp = System.currentTimeMillis();
         String appid= MD5Util.MD5(tel);
-        Observable<HttpResult> cityCategory = methodInterface.joinStatus(appid,sign,timestamp,jobid,status);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult> cityCategory = methodInterface.joinStatus(appid,sign, String.valueOf(timestamp),jobid,status);
         cityCategory.subscribeOn(Schedulers.io())
                 .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
     }
+    public void getMoney(Context context,Subscriber<Balance> subscriber, String tel){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<Balance>> cityCategory = methodInterface.getMoney(appid,sign, String.valueOf(timestamp),1);
+        cityCategory.map(new HttpResultFunc<Balance>())
+        .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+    public void getWageLog(Context context, Subscriber<List<WageLog>> subscriber, String tel, int type,int pageNum){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<List<WageLog>>> cityCategory = methodInterface.getWageLog(appid,sign, String.valueOf(timestamp),type,pageNum);
+        cityCategory.map(new HttpResultFunc<List<WageLog>>())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+    public void getWalletInfo(Context context, Subscriber<List<BindInfo>> subscriber, String tel){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<List<BindInfo>>> cityCategory = methodInterface.getWalletInfo(appid,sign, String.valueOf(timestamp));
+        cityCategory.map(new HttpResultFunc<List<BindInfo>>())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+    /**
+    *绑定支付信息
+    *@param type 支付宝 2  银联 1
+    *@param number 账户
+     * @param  receive_name 用户名
+    *@author invinjun
+    *created at 2016/12/1 10:52
+    */
+    public void putWalletInfo(Context context, Subscriber<String> subscriber, String tel,int type,String bankname,String number,String receive_name){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<String>> cityCategory = methodInterface.putWalletInfo(appid,sign, String.valueOf(timestamp),type,bankname,number,receive_name);
+        cityCategory.map(new HttpResultFunc<String>())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+    /**
+    *删除绑定信息
+    *@param
+    *@param
+    *@author invinjun
+    *created at 2016/12/2 15:40
+    */
+    public void deleteWalletInfo(Context context, Subscriber<String> subscriber, String tel,long id){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<String>> cityCategory = methodInterface.deleteWalletInfo(appid,sign, String.valueOf(timestamp),id);
+        cityCategory.map(new HttpResultFunc<String>())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+    /**
+     *提交提现申请
+     */
+    public void postMoney(Context context,Subscriber<String> subscriber, String tel,String sms,String param){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        methodInterface.postMoney(appid,sign, String.valueOf(timestamp),sms,tel,param)
+                .map(new HttpResultFunc())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+
+    /**
+     *提交实名信息
+     */
+    public void postReal(Context context,Subscriber<String> subscriber, String tel,String front,String behind,String name,String id,String sex){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        methodInterface.postRealName(appid,sign, String.valueOf(timestamp),front,behind,name,id,sex,4)
+                .map(new HttpResultFunc())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+    /**
+    *获取实名信息
+    *@param
+    *@param
+    *@author invinjun
+    *created at 2016/12/2 15:40
+    */
+    public void getAuthInfo(Context context, Subscriber<RealName> subscriber, String tel){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        Observable<HttpResult<RealName>> cityCategory = methodInterface.getAuthInfo(appid,sign, String.valueOf(timestamp));
+        cityCategory.map(new HttpResultFunc<RealName>())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+    /**
+     *提交反馈信息
+     */
+    public void postFeedback(Context context,Subscriber<String> subscriber, String tel,String front){
+        long timestamp = System.currentTimeMillis();
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        methodInterface.postFeedback(appid,sign, String.valueOf(timestamp),front,1)
+                .map(new HttpResultFunc())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+    /**
+     *获取版本信息
+     */
+    public void getVersion(Subscriber<Version> subscriber){
+        methodInterface.getVersion()
+                .map(new HttpResultFunc())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+
+    /**
+     *获取果聊用户资料
+     */
+    public void getTalkUser(Context context, Subscriber<List<LCChatKitUser>> lcChatKitUserSubscriber, String loginid){
+        long timestamp = System.currentTimeMillis();
+        String tel= (String) SPUtils.getParam(context, Constants.LOGIN_INFO,Constants.SP_TEL,"");
+        String appid= MD5Util.MD5(tel);
+        appid=MD5Util.MD5(appid);
+        String sign = MD5Util.getSign(context,timestamp,appid);
+        methodInterface.getTalkUser(appid,sign, String.valueOf(timestamp),loginid,1)
+                .map(new HttpResultFunc<List<LCChatKitUser>>())
+                .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(lcChatKitUserSubscriber);
+    }
+
 }

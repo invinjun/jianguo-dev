@@ -20,7 +20,7 @@ import java.io.File;
 
 public class Constants {
     public static final String JIANGUO_FACTORY1="http://192.168.1.118:8080/";
-    public static final String JIANGUO_YW="http://192.168.1.122:9090/";
+    public static final String JIANGUO_YW="http://192.168.1.118:9090/";
     public static final String JIANGUO_TEST="http://101.200.195.147:8080/";
     public static final String JIANGUO_TEST2="http://v3.jianguojob.com:8080/";
     public static final String JIANGUO_USING=JIANGUO_YW;
@@ -68,6 +68,7 @@ public class Constants {
     public static final String LOGIN_CITY_POSITION="city_POSITION";
     public static final String SP_TYPE="type";//0登录
     public static final String SP_FIRST="first";//0未点击 1 点击首页 2 点击了编辑界面引导
+    public static final String SP_UPADATA="UPDATA";//第一次安装新版本
     public static final String SP_TEL="tel";
     public static final String SP_PASSWORD="password";
     public static final String SP_USERID="id";
@@ -76,9 +77,6 @@ public class Constants {
     public static final String SP_RESUMM="resume";
     public static final String SP_QNTOKEN="qn_token";
     public static final String SP_USER_STATUS="status";
-
-
-
 
 
     public static final String USER_INFO = "userInfo";

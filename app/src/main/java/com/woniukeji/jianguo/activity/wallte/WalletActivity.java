@@ -55,6 +55,8 @@ public class WalletActivity extends BaseActivity {
             R.mipmap.tab_guo_talk_select,
             R.mipmap.tab_about_me_select};
     private ViewPagerAdapter adapter;
+    private String tel;
+
     @Override
     public void setContentView() {
         setContentView(R.layout.activity_wallte);
@@ -110,18 +112,18 @@ public class WalletActivity extends BaseActivity {
         tvActionGet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (balance.getData().getT_user_money().getPay_status()==1){
-                    showShortToast("尚未进行实名认证，不能进行提现操作！");
-                    return;
-                }else if(balance.getData().getT_user_money().getPay_status()==3){
-                    showShortToast("实名认证审核中，不能进行提现操作！");
-                    return;
-                }else if(balance.getData().getT_user_money().getPay_status()==4){
-                    showShortToast("实名认证被拒绝，请重新申请实名认证！");
-                    return;
-                }
+//                if (balance.getData().getT_user_money().getPay_status()==1){
+//                    showShortToast("尚未进行实名认证，不能进行提现操作！");
+//                    return;
+//                }else if(balance.getData().getT_user_money().getPay_status()==3){
+//                    showShortToast("实名认证审核中，不能进行提现操作！");
+//                    return;
+//                }else if(balance.getData().getT_user_money().getPay_status()==4){
+//                    showShortToast("实名认证被拒绝，请重新申请实名认证！");
+//                    return;
+//                }
                 Intent intent=new Intent(WalletActivity.this,DrawMoneyActivity.class);
-                intent.putExtra("balance",balance);
+                intent.putExtra("balance",balance.getMoney());
                 startActivity(intent);
             }
         });
@@ -129,7 +131,7 @@ public class WalletActivity extends BaseActivity {
             @Override
             public void onNext(Balance mBalance) {
                 balance=mBalance;
-                tvMoneySum.setText(balance.getData().getT_user_money().getMoney()+"");
+                tvMoneySum.setText(balance.getMoney()+"");
 
 //                if (balance.getData().getT_user_money().getPay_status()!=2){
 //                    showShortToast("实名认证尚未通过，不能进行提现操作！");
@@ -146,8 +148,8 @@ public class WalletActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        int loginId = (int) SPUtils.getParam(WalletActivity.this, Constants.LOGIN_INFO, Constants.SP_USERID, 0);
-        HttpMethods.getInstance().getWallte(new ProgressSubscriber<Balance>(subscriberOnNextListener,this), String.valueOf(loginId));
+         tel = (String) SPUtils.getParam(WalletActivity.this, Constants.LOGIN_INFO, Constants.SP_TEL, "");
+        HttpMethods.getInstance().getMoney(WalletActivity.this,new ProgressSubscriber<Balance>(subscriberOnNextListener,this), tel);
     }
 
     @Override

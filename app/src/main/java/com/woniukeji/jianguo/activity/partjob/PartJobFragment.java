@@ -327,7 +327,7 @@ public class PartJobFragment extends BaseFragment {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (jobList.size() > 5 && lastVisibleItem == jobList.size() &&DataComplete) {
+                if (jobList.size() >= 10 && lastVisibleItem == jobList.size() &&DataComplete) {
 //                    getJobs(cityCode, typeid, areid, filterid,String.valueOf(lastVisibleItem));
                     isRefesh=false;
                     int pageNum=jobList.size()/10+1;

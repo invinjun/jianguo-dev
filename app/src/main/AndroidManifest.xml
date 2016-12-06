@@ -161,13 +161,12 @@
         <meta-data
             android:name="TencentMapSDK"
             android:value="CIWBZ-PFOHV-6R6P3-U62N6-RCZ4E-WDFIH"/>
-
         <meta-data
             android:name="com.amap.api.v2.apikey"
             android:value="271aae9c316665f0d9707d1a905ae915">
         </meta-data>
         <!-- 定位需要的服务 -->
-        <service android:name="com.amap.api.location.APSService" >
+        <service android:name="com.amap.api.location.APSService">
         </service>
         <!-- 腾讯地图配置 结束 -->
         <!-- 自动升级 结束 -->
@@ -178,9 +177,9 @@
         </activity>
         <activity
             android:name=".activity.mine.ResumeActivity"
-            android:windowSoftInputMode="stateHidden|stateUnchanged"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:windowSoftInputMode="stateHidden|stateUnchanged">
         </activity>
         <activity
             android:name="me.nereo.multi_image_selector.PreviewPicturesActivity"
@@ -191,15 +190,15 @@
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <!-- 实时通信模块、推送（若使用该功能，需添加以下声明）START -->
-         <!--<service android:name="com.avos.avoscloud.PushService"/>-->
+        <!-- <service android:name="com.avos.avoscloud.PushService"/> -->
 
 
-         <!--<receiver android:name="com.avos.avoscloud.AVBroadcastReceiver">-->
-         <!--<intent-filter>-->
-         <!--<action android:name="android.intent.action.BOOT_COMPLETED"/>-->
-         <!--<action android:name="android.intent.action.USER_PRESENT"/>-->
-         <!--</intent-filter>-->
-         <!--</receiver>-->
+        <!-- <receiver android:name="com.avos.avoscloud.AVBroadcastReceiver"> -->
+        <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.BOOT_COMPLETED"/> -->
+        <!-- <action android:name="android.intent.action.USER_PRESENT"/> -->
+        <!-- </intent-filter> -->
+        <!-- </receiver> -->
         <!-- 实时通信模块、推送 END -->
         <!-- 极光推送配置 开始 -->
         <!-- Required SDK核心功能 -->
@@ -308,9 +307,9 @@
             android:name=".activity.mine.SchoolActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
-        <!--<activity-->
-            <!--android:name=".talk.ChatActivity"-->
-            <!--android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>-->
+        <!-- <activity -->
+        <!-- android:name=".talk.ChatActivity" -->
+        <!-- android:theme="@style/Theme.AppCompat.Light.NoActionBar"/> -->
         <activity
             android:name=".activity.setting.SettingActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
@@ -415,32 +414,32 @@
             android:name=".activity.login.RegistActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
-
         <activity
             android:name=".activity.setting.PereferenceActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            >
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
         <activity
             android:name=".activity.login.ChangePhoneActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            >
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
         <activity
             android:name=".activity.mine.SignUpActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            >
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
-        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
-
-            />
-        <activity android:name="com.theartofdev.edmodo.cropper.CropHeadActivity"
-
-            /><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"/>
+        <activity android:name="com.theartofdev.edmodo.cropper.CropHeadActivity"/>
+        <!--
+ ATTENTION: This was auto-generated to add Google Play services to your project for
+     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information.
+        -->
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version"/>
+
+        <activity android:name=".activity.wallte.EditPayMethodActivity"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            >
+        </activity>
     </application>
 
 </manifest>

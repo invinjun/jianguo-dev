@@ -3,6 +3,7 @@ package com.woniukeji.jianguo.http;
 
 import com.woniukeji.jianguo.entity.Balance;
 import com.woniukeji.jianguo.entity.Banner;
+import com.woniukeji.jianguo.entity.BindInfo;
 import com.woniukeji.jianguo.entity.CityBannerEntity;
 import com.woniukeji.jianguo.entity.CityCategory;
 import com.woniukeji.jianguo.entity.CityCategoryBase;
@@ -15,12 +16,17 @@ import com.woniukeji.jianguo.entity.ListTJobEntity;
 import com.woniukeji.jianguo.entity.NameAuth;
 import com.woniukeji.jianguo.entity.NewUser;
 import com.woniukeji.jianguo.entity.PushMessage;
+import com.woniukeji.jianguo.entity.RealName;
 import com.woniukeji.jianguo.entity.Resume;
 import com.woniukeji.jianguo.entity.RxJobDetails;
 import com.woniukeji.jianguo.entity.School;
 import com.woniukeji.jianguo.entity.User;
+import com.woniukeji.jianguo.entity.Version;
+import com.woniukeji.jianguo.entity.WageLog;
+
 import java.util.List;
 import cn.leancloud.chatkit.LCChatKitUser;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -91,20 +97,8 @@ public interface MethodInterface {
         @GET("T_push_List_Servlet")
         Observable<HttpResult<PushMessage>> getPush(@Query("only") String only, @Query("login_id") String login_id);
 
-/**
-*实名认证
-*/
-        @GET("T_user_realname_Insert_Servlet")
-        Observable<HttpResult<String>> postRealName(@Query("only") String only, @Query("login_id") String login_id,
-                                                    @Query("front_image") String front_image, @Query("behind_image") String behind_image,
-                                                    @Query("realname") String realname, @Query("id_number") String id_number,
-                                                    @Query("sex") String sex);
 
-/**
-*查询果聊用户信息
-*/
-        @GET("T_UserGroup_Servlet")//T_UserGroup_Servlet
-        Observable<HttpResult<List<LCChatKitUser>>> getTalkUser(@Query("only") String only, @Query("login_id") String login_id);
+
 
 /**
 *收藏某兼职
@@ -116,13 +110,6 @@ public interface MethodInterface {
 */
         @GET("IsmsCkeck")
         Observable<HttpResult<String>> checkSms(@Query("only") String only, @Query("tel") String tel);
-
-/**
-*提现接口新增验证码参数
-*/
-        @POST("T_newMoneyout_Servlet")
-        Observable<HttpResult<String>> postMoney(@Query("only") String only, @Query("login_id") String login_id,@Query("smscode") String smscode,@Query("type") String type,@Query("money") String money);
-
 /**
 *获取城市和轮播图 首页
 */
@@ -216,6 +203,12 @@ public interface MethodInterface {
         Observable<HttpResult> joinInfo(@Path("job_id") String job_id,@Query("app_id") String app_id, @Query("sign") String sign,@Query("timestamp") String timestamp);
 
 
+        /**
+         *兼职列表查询
+         */
+        @GET("job/user/list/{city_id}")
+        Observable<HttpResult<List<JobListBean>>> jobListOfType(@Path("city_id") String city_id, @Query("area_id") String area_id, @Query("job_type_id") String job_type_id, @Query("order_field") String order_field, @Query("pageNum") String pageNum ,@Query("first_page_type") int first_page_type);
+
 /**
 *兼职列表查询
 */
@@ -249,7 +242,56 @@ public interface MethodInterface {
         @PUT("join/status")
         Observable<HttpResult> joinStatus(@Query("app_id") String app_id, @Query("sign") String sign,@Query("timestamp") String timestamp,@Query("job_id") String job_id,@Query("status") int status);
 
-//        @POST("login")
-//        Observable<HttpResult<NewMerchant>> passwdLogin(@Query("app_id") String app_id, @Query("tel") String tel, @Query("password") String password, @Query("type") String type);
+        @GET("wallet/money")
+        Observable<HttpResult<Balance>> getMoney(@Query("app_id") String app_id, @Query("sign") String sign,@Query("timestamp") String timestamp,@Query("type") int type);
+
+        @GET("wallet/log")
+        Observable<HttpResult<List<WageLog>>> getWageLog(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp, @Query("type") int type, @Query("pageNum") int pageNum);
+
+        @GET("wallet/info")
+        Observable<HttpResult<List<BindInfo>>> getWalletInfo(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp);
+
+        @POST("wallet/info")
+        Observable<HttpResult<String>> putWalletInfo(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp,
+                                                            @Query("type") int type, @Query("name") String name,
+                                                            @Query("number") String number,  @Query("receive_name") String receive_name);
+        @DELETE("wallet/info")
+        Observable<HttpResult<String>> deleteWalletInfo(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp,
+                                                     @Query("id") long type
+                                                     );
+        /**
+         *提现接口
+         */
+        @PUT("wallet/money")
+        Observable<HttpResult<String>> postMoney(@Query("app_id") String app_id, @Query("sign") String sign,@Query("timestamp") String timestamp,@Query("withdrawCode") String code,@Query("tel") String tel,@Query("param") String param);
+        /**
+         *实名认证
+         */
+        @POST("auth/info")
+        Observable<HttpResult<String>> postRealName(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp,
+                                                    @Query("front_img_url") String front_img_url,@Query("behind_img_url") String behind_img_url,
+                                                    @Query("realname") String realname,
+                                                    @Query("IDcard") String IDcard,
+                                                    @Query("sex") String sex,
+                                                    @Query("type") int type//个人 1 机构 2 内部 3 用户实名4
+                                                    );
+
+        @GET("auth/info")
+        Observable<HttpResult<RealName>> getAuthInfo(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp);
+
+        @POST("user/opinion")
+        Observable<HttpResult<String>> postFeedback(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp,@Query("context") String context,@Query("type") int type);
+
+
+        @GET("version")
+        Observable<HttpResult<Version>> getVersion();
+
+
+
+        /**
+         *查询果聊用户信息
+         */
+        @GET("user/im")//T_UserGroup_Servlet
+        Observable<HttpResult<List<LCChatKitUser>>> getTalkUser(@Query("app_id") String app_id, @Query("sign") String sign, @Query("timestamp") String timestamp,@Query("ids") String id,@Query("type") int type);
 
 }

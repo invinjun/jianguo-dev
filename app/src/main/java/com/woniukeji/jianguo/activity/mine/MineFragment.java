@@ -9,18 +9,24 @@ import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.avos.avoscloud.im.v2.AVIMClient;
+import com.avos.avoscloud.im.v2.AVIMException;
+import com.avos.avoscloud.im.v2.callback.AVIMClientCallback;
 import com.bumptech.glide.Glide;
+import com.sdsmdg.tastytoast.TastyToast;
 import com.woniukeji.jianguo.R;
 import com.woniukeji.jianguo.base.BaseFragment;
 import com.woniukeji.jianguo.base.Constants;
 import com.woniukeji.jianguo.entity.BaseBean;
 import com.woniukeji.jianguo.entity.User;
+import com.woniukeji.jianguo.entity.Version;
 import com.woniukeji.jianguo.eventbus.HeadImgEvent;
 import com.woniukeji.jianguo.eventbus.QuickLoginEvent;
 import com.woniukeji.jianguo.activity.login.LoginActivity;
@@ -28,16 +34,25 @@ import com.woniukeji.jianguo.activity.main.MainActivity;
 import com.woniukeji.jianguo.activity.setting.FeedBackActivity;
 import com.woniukeji.jianguo.activity.setting.PereferenceActivity;
 import com.woniukeji.jianguo.activity.setting.SettingActivity;
+import com.woniukeji.jianguo.http.HttpMethods;
+import com.woniukeji.jianguo.http.ProgressSubscriber;
+import com.woniukeji.jianguo.http.SubscriberOnNextListener;
+import com.woniukeji.jianguo.utils.CommonUtils;
 import com.woniukeji.jianguo.utils.GlideCircleTransform;
 import com.woniukeji.jianguo.utils.LogUtils;
 import com.woniukeji.jianguo.utils.SPUtils;
 import com.woniukeji.jianguo.activity.wallte.WalletActivity;
+import com.woniukeji.jianguo.utils.UpDialog;
 
 import java.lang.ref.WeakReference;
 
 import butterknife.ButterKnife;
 import butterknife.BindView;
 import butterknife.OnClick;
+import cn.jpush.android.api.JPushInterface;
+import cn.leancloud.chatkit.LCChatKit;
+import cn.leancloud.chatkit.event.LCIMIMTypeMessageEvent;
+import cn.pedant.SweetAlert.SweetAlertDialog;
 import de.greenrobot.event.EventBus;
 
 public class MineFragment extends BaseFragment {
@@ -64,13 +79,17 @@ public class MineFragment extends BaseFragment {
     @BindView(R.id.rl_setting) RelativeLayout rlSetting;
     @BindView(R.id.ll_guanli) RelativeLayout llGuanli;
     @BindView(R.id.about) RelativeLayout about;
+    @BindView(R.id.refresh) RelativeLayout refresh;
+
+    @BindView(R.id.btn_logout) Button btnLogout;
     private Handler mHandler = new Myhandler(this.getActivity());
     private Context context = getActivity();
     private int status;
     private String tel="";
+    private SubscriberOnNextListener<Version> versionSubscriberOnNextListener;
 
 
-    @OnClick({R.id.about,R.id.iv_setting,R.id.hobby,R.id.ll_guanli, R.id.ll_money,  R.id.ll_real_name, R.id.credit, R.id.rl_evaluation, R.id.ll_collect, R.id.rl_point, R.id.rl_feedback, R.id.rl_setting})
+    @OnClick({R.id.refresh,R.id.btn_logout,R.id.about,R.id.iv_setting,R.id.hobby,R.id.ll_guanli, R.id.ll_money,  R.id.ll_real_name, R.id.credit, R.id.rl_evaluation, R.id.ll_collect, R.id.rl_point, R.id.rl_feedback, R.id.rl_setting})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.iv_setting:
@@ -123,7 +142,10 @@ public class MineFragment extends BaseFragment {
                 Intent intentColl = new Intent(getActivity().getApplicationContext(), CollTionActivity.class);
                 startActivity(intentColl);
                 break;
-            case R.id.rl_point:
+            case R.id.refresh:
+                //更新代码
+                HttpMethods.getInstance().getVersion(new ProgressSubscriber<Version>(versionSubscriberOnNextListener,getActivity()));
+
                 break;
             case R.id.rl_feedback:
                 if (tel.equals("")) {
@@ -161,11 +183,56 @@ public class MineFragment extends BaseFragment {
                 startActivity(intent);
                 break;
 
+            case R.id.btn_logout:
+                new SweetAlertDialog(getActivity(), SweetAlertDialog.WARNING_TYPE)
+                        .setTitleText("确定要退出吗?")
+                        .setCancelText("取消")
+                        .setConfirmText("确定")
+                        .showCancelButton(true)
+                        .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                            @Override
+                            public void onClick(SweetAlertDialog sweetAlertDialog) {
+                                sweetAlertDialog.cancel();
+                                sweetAlertDialog.dismiss();
+//                                暂时关闭果聊
+                                if(LCChatKit.getInstance().getClient().getClientId()!=null){
+                                    LCChatKit.getInstance().close(new AVIMClientCallback() {
+                                        @Override
+                                        public void done(AVIMClient avimClient, AVIMException e) {
+                                        }
+                                    });
+                                }
 
+                                JPushInterface.stopPush(getActivity());
+//                ActivityManager.getActivityManager().finishAllActivity();
+                                SPUtils.deleteParams(getActivity());
+                                btnLogout.setVisibility(View.GONE);
+                                sendEvent();
+
+                                getActivity().finish();
+                                startActivity(new Intent(getActivity(),MainActivity.class));
+//                                TalkMessageEvent talkMessageEvent = new TalkMessageEvent();
+//                                talkMessageEvent.isLogin = false;
+//                                EventBus.getDefault().post(talkMessageEvent);
+                            }
+                        })
+                        .setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                            @Override
+                            public void onClick(SweetAlertDialog sDialog) {
+                                sDialog.cancel();
+                                sDialog.dismiss();
+                            }
+                        })
+                        .show();
+                break;
         }
     }
 
-
+    private void sendEvent() {
+        LCIMIMTypeMessageEvent event = new LCIMIMTypeMessageEvent();
+        event.messageNull = true;
+        EventBus.getDefault().post(event);
+    }
     private static class Myhandler extends Handler {
         private WeakReference<Context> reference;
 
@@ -209,11 +276,41 @@ public class MineFragment extends BaseFragment {
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
+        initListener();
         ButterKnife.bind(this, view);
         return view;
 
 
     }
+
+    private void initListener() {
+
+        versionSubscriberOnNextListener =new SubscriberOnNextListener<Version>() {
+            @Override
+            public void onNext(final Version version) {
+                int version1 = CommonUtils.getVersion(getActivity());
+                if (Integer.valueOf(version.getAndroid_business_version())>version1){
+                    new SweetAlertDialog(getActivity(), SweetAlertDialog.WARNING_TYPE)
+                            .setTitleText("检测到新版本，是否更新？")
+                            .setConfirmText("确定")
+                            .setCancelText("取消")
+                            .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                                @Override
+                                public void onClick(SweetAlertDialog sDialog) {
+                                    sDialog.dismissWithAnimation();
+                                    UpDialog upDataDialog = new UpDialog(getActivity(),version.getAndroid_business_url());
+                                    upDataDialog.setCanceledOnTouchOutside(false);
+                                    upDataDialog.setCanceledOnTouchOutside(false);
+                                    upDataDialog.show();
+                                }
+                            }).show();
+                }else
+                    TastyToast.makeText(getActivity(),"已经是最新版本！",TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+
+            }
+        };
+    }
+
     @Override
     public int getContentViewId() {
         return R.layout.activity_mine;
@@ -260,12 +357,12 @@ public class MineFragment extends BaseFragment {
 
     public void initData(boolean init) {
         if (init) {
-            String nick = (String) SPUtils.getParam(getActivity(), Constants.USER_INFO, Constants.SP_NAME, "");
+            String nick = (String) SPUtils.getParam(getActivity(), Constants.USER_INFO, Constants.SP_NICK, "");
             String schoolStr = (String) SPUtils.getParam(getActivity(), Constants.USER_INFO, Constants.SP_SCHOOL, "");
             String img = (String) SPUtils.getParam(getActivity(), Constants.USER_INFO, Constants.SP_IMG, "");
 //            status = (int) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_STATUS, 0);
             tel = (String) SPUtils.getParam(getActivity(), Constants.LOGIN_INFO, Constants.SP_TEL, "");
-
+            rlSetting.setVisibility(View.GONE);
             if (schoolStr.equals("")) {
                 school.setText("未填写");
             } else {
@@ -276,7 +373,6 @@ public class MineFragment extends BaseFragment {
             } else {
                 name.setText(nick);
             }
-            phone.setText(tel);
             if (img != null && !img.equals("")) {
                 Glide.with(getActivity()).load(img)
                         .placeholder(R.mipmap.icon_head_defult)
@@ -298,6 +394,7 @@ public class MineFragment extends BaseFragment {
                     .error(R.mipmap.icon_head_defult)
                     .transform(new GlideCircleTransform(getActivity()))
                     .into(imgHead);
+            btnLogout.setVisibility(View.GONE);
             account.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
