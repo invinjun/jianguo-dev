@@ -201,7 +201,7 @@ public class PartJobFragment extends BaseFragment {
         List<AreaBean> areaList = cityAreaDao.alterAreaDate(cityBean.getCode());
         initDrawData(areaList,listTTypeEntities);
         isRefesh=true;
-        HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,areid,typeid,filterid,"1");
+        HttpMethods.getInstance().getJobList(new ProgressSubscriberOnError<List<JobListBean>>(listSubscriberOnNextListener,getActivity()),cityCode,"0","0","0","1");
 
 //        HttpMethods.getInstance().getCityCategory(new ProgressSubscriber<CityCategory>(subscriberOnNextListener,getActivity()));
     }

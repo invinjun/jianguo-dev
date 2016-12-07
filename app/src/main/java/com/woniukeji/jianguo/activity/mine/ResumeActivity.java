@@ -342,11 +342,11 @@ public class ResumeActivity extends BaseActivity {
         if (userResum.getIs_student()==2) {
             rbYes.setChecked(false);
             rbNo.setChecked(true);
-//            String schoolHtml="<font color='red'>*</font> 所在学校";
-//            CharSequence schoolSequence=Html.fromHtml(schoolHtml);
+            String schoolHtml="<font color='red'>*</font> 所在学校";
+            CharSequence schoolSequence=Html.fromHtml(schoolHtml);
             tvNecessarySchool.setText("所在学校");
-            tvDate.setText("");
-            tvSchool.setText("");
+            tvDate.setText(userResum.getIntoschool_date());
+            tvSchool.setText(userResum.getSchool());
         } else {
             rbNo.setChecked(false);
             rbYes.setChecked(true);

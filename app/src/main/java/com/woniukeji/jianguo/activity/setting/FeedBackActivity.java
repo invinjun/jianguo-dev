@@ -72,7 +72,7 @@ public class FeedBackActivity extends BaseActivity {
         stringSubscriberOnNextListener=new SubscriberOnNextListener<String>() {
             @Override
             public void onNext(String s) {
-                TastyToast.makeText(FeedBackActivity.this,"反馈提交成功，我们会及时处理您的反馈的！",TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
+                TastyToast.makeText(FeedBackActivity.this,"反馈提交成功，我们会及时处理您的反馈！",TastyToast.LENGTH_SHORT,TastyToast.SUCCESS);
                 finish();
             }
         };

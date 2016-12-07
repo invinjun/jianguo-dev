@@ -463,7 +463,7 @@ public class JobDetailActivity extends BaseActivity {
         }
         tvWorkContent.setText(jobInfo.getContent());
         tvWorkRequire.setText(jobInfo.getRequire());
-        tvReleaseDate.setText(DateUtils.getDate(jobInfo.getCreateTime())+" 发布");
+        tvReleaseDate.setText(DateUtils.getTime(jobInfo.getCreateTime(),"yyyy-MM-dd")+" 发布");
         //商家信息
         tvCompanyName.setText(jobInfo.getContact_name());
 
